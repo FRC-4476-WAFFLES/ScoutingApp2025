@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/Home';
 import SettingsScreen from '../screens/Settings';
 import PregameScreen from '../screens/Pregame';
+import MatchScreen from '../screens/Match';
+import QRCodeScreen from '../screens/QRCode';
 
 const Stack = createNativeStackNavigator();
 
@@ -14,6 +16,8 @@ const RootStack = () => {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Pregame" component={PregameScreen} />
+      <Stack.Screen name="Match" component={MatchScreen} />
+      <Stack.Screen name="QRCode" component={QRCodeScreen} />
     </Stack.Navigator>
   );
 }

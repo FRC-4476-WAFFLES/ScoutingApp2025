@@ -82,6 +82,12 @@ const SettingsScreen = props => {
       checkMatchScheduleExists();
   }, []);
 
+  const barcodeScanCheck = async ({type, data}) => {
+    setScanned(true);
+    setShouldScan(false);
+    alert(`Bar code with type ${type} and data ${data} has been scanned!`);
+  }
+
   const handleBarCodeScanned = async ({type, data}) => {
       setScanned(true);
 
