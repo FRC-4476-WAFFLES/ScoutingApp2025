@@ -378,7 +378,7 @@ const SettingsScreen = props => {
       };
   
       const response = await fetch(
-          `https://frc-api.firstinspires.org/v3.0/2022/schedule/${codeText}?tournamentLevel=qual`,
+          `https://frc-api.firstinspires.org/v3.0/2024/schedule/${codeText}?tournamentLevel=qual`,
           requestOptions
       )
         .then((res) => res.text())
