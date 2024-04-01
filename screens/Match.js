@@ -38,6 +38,8 @@ const MatchScreen = props => {
 
   const [trapNotes, setTrapNotes] = React.useState(0);
 
+  const [stashNotes, setStashNotes] = React.useState(0);
+
   const [isCommentBoxOpen, setIsCommentBoxOpen] = React.useState(false);
   const [commentValue, setCommentValue] = React.useState(``);
 
@@ -190,6 +192,7 @@ const MatchScreen = props => {
                           </TouchableOpacity>
                           </View>
                         </View>
+
                         <View style={styles.hubInput}>
                           <Text style={styles.text}>
                             {teleOpAmp} Notes scored in Amp
@@ -207,6 +210,32 @@ const MatchScreen = props => {
                             <TouchableOpacity
                                 style={[styles.roundButton, styles.plusButton]}
                                 onPress={() => updateTeleOpAmp(1)}
+                            >
+                                <Image
+                                source={require("../assets/images/plus-icon.png")}
+                                style={styles.buttonIcon}
+                                />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        <View style={styles.hubInput}>
+                          <Text style={styles.text}>
+                            {stashNotes} Notes Stashed
+                          </Text>
+                          <View style={styles.ballButtons}>
+                            <TouchableOpacity
+                                style={[styles.roundButton, styles.minusButton]}
+                                onPress={() => updateStashNotes(-1)}
+                            >
+                                <Image
+                                source={require("../assets/images/minus-icon.png")}
+                                style={styles.buttonIcon}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.roundButton, styles.plusButton]}
+                                onPress={() => updateStashNotes(1)}
                             >
                                 <Image
                                 source={require("../assets/images/plus-icon.png")}
@@ -286,7 +315,7 @@ const MatchScreen = props => {
       currData = currData.slice(0, commaIndex + 1);
       console.log(`currData: ${currData}`)
   
-      currData += `${autoAmp},${autoSpeaker},${teleOpAmp},${teleOpSpeaker},${trapNotes},${
+      currData += `${autoAmp},${autoSpeaker},${teleOpAmp},${teleOpSpeaker},${stashNotes},${trapNotes},${
         commentValue === `` ? 0 : `"${commentValue}"`
       }`;
   
@@ -358,6 +387,13 @@ const MatchScreen = props => {
       if (target >= 0) {
         setTeleOpAmp(target);
       }
+  }
+
+  function updateStashNotes(num) {
+    let target = stashNotes + num;
+    if (target >= 0) {
+      setStashNotes(target);
+    }
   }
 
   function updateTrapNotes(num) {
