@@ -17,8 +17,6 @@ import { ScreenHeight, ScreenWidth } from "../components/shared";
 const HomeScreen = props => {
   const { navigation, route } = props;
 
-  const [toNavigate, setToNavigate] = React.useState("Pregame");
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Background and title */}
@@ -27,40 +25,29 @@ const HomeScreen = props => {
         resizeMode="cover"
         source={require("../assets/images/HomeScreen/backdrop.png")}
       >
-        <Text style={styles.title}>W.A.F.F.L.E.S Scouting</Text>
+        <View style={styles.overlay}>
+          <Text style={styles.title}>W.A.F.F.L.E.S</Text>
+          <Text style={styles.subtitle}>Scouting</Text>
+        </View>
       </ImageBackground>
 
-      {/* LESS GO button */}
+      {/* Main action button */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() =>
-          navigation.navigate("Pregame", {})
-        }
+        onPress={() => navigation.navigate("Pregame", {})}
       >
-        <View>
-          <Text style={styles.buttonText}>
-            <View>
-              <Image
-                style={styles.buttonImage}
-                source={require("../assets/images/HomeScreen/paper-mario.png")}
-              />
-            </View>
-            LES GOOOO!
-            <View>
-              <Image
-                style={styles.buttonImageDababy}
-                source={require("../assets/images/HomeScreen/dababy.png")}
-              />
-            </View>
-          </Text>
-        </View>
+        <Text style={styles.buttonText}>Start Scouting</Text>
       </TouchableOpacity>
 
       {/* Bottom Row Icons */}
       <View style={styles.rowIcons}>
         {/* Settings Icon */}
-        <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+        <TouchableOpacity 
+          style={styles.settingsButton}
+          onPress={() => navigation.navigate("Settings")}
+        >
           <Image
+            style={styles.settingsIcon}
             source={require("../assets/images/HomeScreen/settings-icon.png")}
           />
         </TouchableOpacity>
@@ -74,61 +61,84 @@ export default HomeScreen;
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "orange",
-      alignItems: "center",
-      justifyContent: "center",
-      overflow: "hidden",
+      backgroundColor: "#1a1a1a",
     },
   
     backdrop: {
-      flex: 1,
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       width: ScreenWidth,
       height: ScreenHeight,
     },
+
+    overlay: {
+      flex: 1,
+      alignItems: 'center',
+      paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 40 : 60,
+    },
   
     title: {
-      fontSize: 50,
-      color: "white",
+      fontSize: 48,
+      fontWeight: 'bold',
+      color: "#000000",
       textAlign: "center",
-      paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 30,
+    },
+
+    subtitle: {
+      fontSize: 24,
+      color: "#000000",
+      textAlign: "center",
+      marginTop: 8,
+      fontWeight: '600',
     },
   
     button: {
-      // marginTop: 20,
-      borderRadius: 100,
-      padding: 10,
-      backgroundColor: "white",
-      width: ScreenWidth * 0.8,
-      bottom: ScreenHeight * 0.1,
+      position: 'absolute',
+      bottom: 100,
+      alignSelf: 'center',
+      borderRadius: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 32,
+      backgroundColor: "#000000",
+      width: ScreenWidth * 0.85,
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
     },
   
     buttonText: {
-      color: "black",
-      fontWeight: "bold",
-      textTransform: "uppercase",
-      fontSize: 20,
+      color: "#FFD700",
+      fontWeight: "600",
+      fontSize: 18,
       textAlign: "center",
     },
   
-    buttonImage: {
-      width: 30,
-      height: 30,
-      alignContent: "flex-start",
-      marginRight: ScreenWidth * 0.05,
-    },
-  
-    buttonImageDababy: {
-      width: 30,
-      height: 30,
-      alignContent: "flex-end",
-      marginLeft: ScreenWidth * 0.05,
-    },
-  
     rowIcons: {
+      position: 'absolute',
+      bottom: 20,
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
-      bottom: ScreenWidth * 0.05,
       width: "100%",
+    },
+
+    settingsButton: {
+      padding: 12,
+      backgroundColor: '#000000',
+      borderRadius: 12,
+    },
+
+    settingsIcon: {
+      width: 24,
+      height: 24,
+      tintColor: '#FFD700',
     },
 });
