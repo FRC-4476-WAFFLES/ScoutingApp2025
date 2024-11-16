@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
     Text,
     SafeAreaView,
@@ -16,42 +16,69 @@ import { ScreenHeight, ScreenWidth } from "../components/shared";
 
 const HomeScreen = props => {
   const { navigation, route } = props;
+  const [orientation, setOrientation] = useState('portrait');
+  const [isTablet, setIsTablet] = useState(false);
+
+  useEffect(() => {
+    const updateLayout = () => {
+      const dim = Dimensions.get('screen');
+      setOrientation(dim.width > dim.height ? 'landscape' : 'portrait');
+      // Check if device is tablet based on screen size
+      setIsTablet(Math.min(dim.width, dim.height) >= 600);
+    };
+
+    updateLayout();
+    const subscription = Dimensions.addEventListener('change', updateLayout);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Background and title */}
       <ImageBackground
         style={styles.backdrop}
         resizeMode="cover"
         source={require("../assets/images/HomeScreen/backdrop.png")}
       >
         <View style={styles.overlay}>
-          <Text style={styles.title}>W.A.F.F.L.E.S</Text>
-          <Text style={styles.subtitle}>Scouting</Text>
+          <View style={styles.titleContainer}>
+            <Text style={[
+              styles.title,
+              orientation === 'landscape' && !isTablet && styles.titleLandscape
+            ]}>W.A.F.F.L.E.S</Text>
+            <Text style={[
+              styles.subtitle,
+              orientation === 'landscape' && !isTablet && styles.subtitleLandscape
+            ]}>Scouting</Text>
+          </View>
+
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                orientation === 'landscape' && !isTablet && styles.buttonLandscape
+              ]}
+              onPress={() => navigation.navigate("Pregame", {})}
+            >
+              <Text style={styles.buttonText}>Start Scouting</Text>
+            </TouchableOpacity>
+
+            <View style={styles.rowIcons}>
+              <TouchableOpacity 
+                style={styles.settingsButton}
+                onPress={() => navigation.navigate("Settings")}
+              >
+                <Image
+                  style={styles.settingsIcon}
+                  source={require("../assets/images/HomeScreen/settings-icon.png")}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ImageBackground>
-
-      {/* Main action button */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate("Pregame", {})}
-      >
-        <Text style={styles.buttonText}>Start Scouting</Text>
-      </TouchableOpacity>
-
-      {/* Bottom Row Icons */}
-      <View style={styles.rowIcons}>
-        {/* Settings Icon */}
-        <TouchableOpacity 
-          style={styles.settingsButton}
-          onPress={() => navigation.navigate("Settings")}
-        >
-          <Image
-            style={styles.settingsIcon}
-            source={require("../assets/images/HomeScreen/settings-icon.png")}
-          />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -70,14 +97,20 @@ const styles = StyleSheet.create({
       left: 0,
       right: 0,
       bottom: 0,
-      width: ScreenWidth,
-      height: ScreenHeight,
+      width: '100%',
+      height: '100%',
     },
 
     overlay: {
       flex: 1,
       alignItems: 'center',
-      paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 40 : 60,
+      justifyContent: 'space-between',
+      paddingVertical: Platform.OS === "android" ? StatusBar.currentHeight + 20 : 20,
+    },
+
+    titleContainer: {
+      alignItems: 'center',
+      marginTop: 40,
     },
   
     title: {
@@ -87,6 +120,11 @@ const styles = StyleSheet.create({
       textAlign: "center",
     },
 
+    titleLandscape: {
+      fontSize: 36,
+      marginTop: 0,
+    },
+
     subtitle: {
       fontSize: 24,
       color: "#000000",
@@ -94,16 +132,18 @@ const styles = StyleSheet.create({
       marginTop: 8,
       fontWeight: '600',
     },
+
+    subtitleLandscape: {
+      fontSize: 20,
+    },
   
     button: {
-      position: 'absolute',
-      bottom: 100,
-      alignSelf: 'center',
       borderRadius: 12,
       paddingVertical: 16,
       paddingHorizontal: 32,
       backgroundColor: "#000000",
       width: ScreenWidth * 0.85,
+      marginBottom: 20,
       elevation: 4,
       shadowColor: "#000",
       shadowOffset: {
@@ -112,6 +152,10 @@ const styles = StyleSheet.create({
       },
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
+    },
+
+    buttonLandscape: {
+      width: ScreenHeight * 0.4,
     },
   
     buttonText: {
@@ -122,8 +166,6 @@ const styles = StyleSheet.create({
     },
   
     rowIcons: {
-      position: 'absolute',
-      bottom: 20,
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
@@ -140,5 +182,11 @@ const styles = StyleSheet.create({
       width: 24,
       height: 24,
       tintColor: '#FFD700',
+    },
+
+    bottomContainer: {
+      width: '100%',
+      alignItems: 'center',
+      marginBottom: 20,
     },
 });
