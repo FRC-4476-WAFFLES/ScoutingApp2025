@@ -16,7 +16,7 @@ import {
 import * as FileSystem from "expo-file-system";
 import ScreenTitle from "../components/ScreenTitle";
 
-import { CameraView, Camera } from "expo-camera/next";
+import { Camera } from 'expo-camera';
 
 const SettingsScreen = props => {
   const { navigation, route } = props;
@@ -171,7 +171,7 @@ const SettingsScreen = props => {
               {shouldScan && 
                   <View style={styles.container}>
                       <View style={styles.barcodeBox}>
-                        <CameraView
+                        <Camera
                           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
                           barcodeScannerSettings={{
                             barCodeTypes: ["qr"],
