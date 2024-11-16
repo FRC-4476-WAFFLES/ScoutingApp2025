@@ -26,7 +26,8 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-native-view-shot": "~4.0.0",
-    "react-qr-code": "^2.0.12"
+    "react-qr-code": "^2.0.12",
+    "expo-font": "~13.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

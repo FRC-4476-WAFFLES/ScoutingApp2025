@@ -11,6 +11,7 @@ import {
     StatusBar,
     Platform,
 } from "react-native";
+import * as Font from 'expo-font';
 
 import { ScreenHeight, ScreenWidth } from "../components/shared";
 
@@ -18,8 +19,17 @@ const HomeScreen = props => {
   const { navigation, route } = props;
   const [orientation, setOrientation] = useState('portrait');
   const [isTablet, setIsTablet] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Cooper-Black': require('../assets/fonts/CooperBlackRegular.ttf'),
+      });
+      setFontsLoaded(true);
+    }
+
+    loadFonts();
     const updateLayout = () => {
       const dim = Dimensions.get('screen');
       setOrientation(dim.width > dim.height ? 'landscape' : 'portrait');
@@ -35,19 +45,23 @@ const HomeScreen = props => {
     };
   }, []);
 
+  if (!fontsLoaded) {
+    return null; // Or a loading indicator
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ImageBackground
         style={styles.backdrop}
-        resizeMode="cover"
         source={require("../assets/images/HomeScreen/backdrop.png")}
+        resizeMode="cover"
       >
         <View style={styles.overlay}>
           <View style={styles.titleContainer}>
             <Text style={[
               styles.title,
               orientation === 'landscape' && !isTablet && styles.titleLandscape
-            ]}>W.A.F.F.L.E.S</Text>
+            ]}>W.A.F.F.L.E.S.</Text>
             <Text style={[
               styles.subtitle,
               orientation === 'landscape' && !isTablet && styles.subtitleLandscape
@@ -92,13 +106,7 @@ const styles = StyleSheet.create({
     },
   
     backdrop: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      width: '100%',
-      height: '100%',
+      flex: 1,
     },
 
     overlay: {
@@ -115,7 +123,7 @@ const styles = StyleSheet.create({
   
     title: {
       fontSize: 48,
-      fontWeight: 'bold',
+      fontFamily: 'Cooper-Black',
       color: "#000000",
       textAlign: "center",
     },
@@ -127,10 +135,10 @@ const styles = StyleSheet.create({
 
     subtitle: {
       fontSize: 24,
+      fontFamily: 'Cooper-Black',
       color: "#000000",
       textAlign: "center",
       marginTop: 8,
-      fontWeight: '600',
     },
 
     subtitleLandscape: {

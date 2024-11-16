@@ -38,8 +38,15 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
-      ]
+      ],
+      "expo-font"
     ],
-    "newArchEnabled": true
+    "newArchEnabled": true,
+    "fonts": [
+      {
+        "asset": "./assets/fonts/CooperBlackRegular.ttf",
+        "family": "Cooper-Black"
+      }
+    ]
   }
 }
