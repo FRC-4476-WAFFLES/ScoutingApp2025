@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ScoutingApp2024",
-    "slug": "ScoutingApp2024",
+    "slug": "scouting-2024",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,21 +15,29 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
+      }
     },
     "android": {
+      "package": "com.brennan.ScoutingApp2024",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.faiazumaer.ScoutingApp2024"
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "9fc17a6b-1f6a-46c9-8da5-eaf07ba87fd4"
+        "projectId": "20744738-5380-410a-9cb5-d31e0476030f"
       }
     },
     "plugins": [
@@ -48,6 +56,7 @@
         "asset": "./assets/fonts/CooperBlackRegular.ttf",
         "family": "Cooper-Black"
       }
-    ]
+    ],
+    "owner": "brennanb"
   }
 }
