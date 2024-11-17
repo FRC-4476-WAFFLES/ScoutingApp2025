@@ -41,6 +41,9 @@ const PregameScreen = props => {
 
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const [maxMatchNum, setMaxMatchNum] = useState(0);
+  const [minMatchNum, setMinMatchNum] = useState(1);
+
   const scheduleFileUri = `${
       FileSystem.documentDirectory
   }${"MatchSchedule.json"}`;
@@ -119,6 +122,31 @@ const PregameScreen = props => {
     loadExistingComment();
   }, [matchNum, isInitialized]);
 
+  React.useEffect(() => {
+    const loadMatchRange = async () => {
+      try {
+        let tmp = await FileSystem.getInfoAsync(scheduleCsvUri);
+        
+        if (!tmp.exists) {
+          let tmp1 = await FileSystem.getInfoAsync(scheduleFileUri);
+          if (tmp1.exists) {
+            let jsontext = await FileSystem.readAsStringAsync(scheduleFileUri);
+            let matchjson = await JSON.parse(jsontext);
+            setMaxMatchNum(matchjson["Schedule"].length);
+          }
+        } else {
+          let jsontext = await FileSystem.readAsStringAsync(scheduleCsvUri);
+          let matchjson = await JSON.parse(jsontext);
+          setMaxMatchNum(matchjson["Schedule"].length);
+        }
+      } catch (error) {
+        console.error('Error loading match range:', error);
+      }
+    };
+
+    loadMatchRange();
+  }, []);
+
   const openNameModal = () => {
     setTempScoutName(scoutName || '');
     setIsNameModalVisible(true);
@@ -181,9 +209,16 @@ const PregameScreen = props => {
                 <Text style={styles.sectionTitle}>Match Number</Text>
                 <TextInput
                   style={styles.input}
-                  onChangeText={text => { setMatchNum(parseInt(text)) }}
+                  onChangeText={text => { 
+                    const num = parseInt(text);
+                    if (!text) {
+                      setMatchNum(undefined);
+                    } else if (num >= minMatchNum && num <= maxMatchNum) {
+                      setMatchNum(num);
+                    }
+                  }}
                   value={matchNum ? String(matchNum) : undefined}
-                  placeholder="Enter match..."
+                  placeholder={`Enter match (${minMatchNum}-${maxMatchNum})...`}
                   placeholderTextColor="rgba(255, 215, 0, 0.5)"
                   keyboardType="numeric"
                 />
@@ -209,9 +244,14 @@ const PregameScreen = props => {
                       { color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc' }
                     ]}>{teamNum}</Text>
                   ) : (
-                    <Text style={styles.label}>
-                      Enter match number and press Find Match
-                    </Text>
+                    <View>
+                      <Text style={styles.label}>
+                        Enter match number and press Find Match
+                      </Text>
+                      <Text style={styles.matchRangeText}>
+                        Valid matches: {minMatchNum}-{maxMatchNum}
+                      </Text>
+                    </View>
                   )}
                 </View>
               </View>
@@ -364,6 +404,17 @@ const PregameScreen = props => {
   );
 
   async function findMatch() {
+      if (!matchNum) {
+        alert('Please enter a match number');
+        return;
+      }
+
+      if (matchNum < minMatchNum || matchNum > maxMatchNum) {
+        alert(`Invalid match number. Please enter a match number between ${minMatchNum} and ${maxMatchNum}`);
+        setTeamNum(undefined);
+        return;
+      }
+
       let settingsJSON = await JSON.parse(
         await FileSystem.readAsStringAsync(settingsFileUri)
       );
@@ -636,6 +687,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 
   modalContent: {
@@ -748,6 +804,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlignVertical: 'center',
     marginBottom: 16,
+  },
+
+  matchRangeText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 

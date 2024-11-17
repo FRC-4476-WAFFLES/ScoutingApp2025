@@ -18,6 +18,11 @@ import {
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from 'expo-clipboard';
 
+const getAllianceColor = (driverStation) => {
+  if (!driverStation) return null;
+  return driverStation.charAt(0) === 'R' ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
+};
+
 const MatchScreen = props => {
   const { navigation, route } = props;
 
@@ -37,6 +42,8 @@ const MatchScreen = props => {
 
   const [isAutoExpanded, setIsAutoExpanded] = useState(true);
   const [isTeleOpExpanded, setIsTeleOpExpanded] = useState(false);
+
+  const [driverStation, setDriverStation] = useState(null);
 
   useEffect(() => {
     const loadExistingComment = async () => {
@@ -63,6 +70,22 @@ const MatchScreen = props => {
 
     loadExistingComment();
   }, [route.params?.matchNum, isInitialized]);
+
+  useEffect(() => {
+    const loadDriverStation = async () => {
+      try {
+        const settingsFileUri = `${FileSystem.documentDirectory}ScoutingAppSettings.json`;
+        let settingsJSON = await JSON.parse(
+          await FileSystem.readAsStringAsync(settingsFileUri)
+        );
+        setDriverStation(settingsJSON["Settings"]["driverStation"]);
+      } catch (err) {
+        console.log("Error loading driver station:", err);
+      }
+    };
+    
+    loadDriverStation();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,7 +143,19 @@ const MatchScreen = props => {
         bounces={true}
       >
         <View style={styles.mainContent}>
-          <Text style={styles.teamHeader}>Team {route.params.teamNum}</Text>
+          <View style={[
+            styles.teamHeaderContainer,
+            driverStation && { backgroundColor: getAllianceColor(driverStation) }
+          ]}>
+            <Text style={[
+              styles.teamHeader,
+              driverStation && { 
+                color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc'
+              }
+            ]}>
+              Team {route.params.teamNum}
+            </Text>
+          </View>
 
           {/* Auto Section */}
           <View style={styles.section}>
@@ -456,11 +491,16 @@ const styles = StyleSheet.create({
     minHeight: '100%',
   },
 
+  teamHeaderContainer: {
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+
   teamHeader: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
   },
 
   section: {
@@ -575,6 +615,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 
   modalContent: {
