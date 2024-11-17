@@ -212,42 +212,69 @@ const SettingsScreen = props => {
   }
 
   async function downloadMatchSchedule() {
-    await getMatchSchedule();
-    if (!jsonText) {
-      console.warn('Failed Downloading Match Schedule. Please Retry.')
+    if (!codeText) {
+      alert('Please enter an event code');
       return;
     }
 
-    let theJSON = JSON.stringify(await JSON.parse(jsonText), null, "\t");
-    console.log(theJSON)
-    await FileSystem.writeAsStringAsync(scheduleFileUri, theJSON);
-    setShowScheduleCheckmark(true);
+    try {
+      setShowScheduleCheckmark(false); // Reset checkmark
+      const data = await getMatchSchedule();
+      
+      if (!data) {
+        alert('Failed to download match schedule. Please check the event code and try again.');
+        return;
+      }
+
+      try {
+        // Verify the data is valid JSON before saving
+        const parsedData = JSON.parse(data);
+        const formattedJSON = JSON.stringify(parsedData, null, "\t");
+        
+        await FileSystem.writeAsStringAsync(scheduleFileUri, formattedJSON);
+        setShowScheduleCheckmark(true);
+        console.log('Match schedule saved successfully');
+      } catch (e) {
+        alert('Invalid data received from the server. Please try again.');
+        console.error('JSON parsing error:', e);
+      }
+    } catch (error) {
+      alert('Error downloading match schedule. Please check your connection and try again.');
+      console.error('Download error:', error);
+    }
   }
 
   async function getMatchSchedule() {
-    var base64 = require("base-64");
+    try {
+      var base64 = require("base-64");
+      var username = "faiazumaer";
+      var password = "5fecfbc3-09ce-45a0-bad2-769fd4006781";
 
-    var username = "faiazumaer";
-    var password = "5fecfbc3-09ce-45a0-bad2-769fd4006781";
+      var requestOptions = {
+        method: "GET",
+        headers: {
+          Authorization: "Basic " + base64.encode(username + ":" + password),
+          "If-Modified-Since": "",
+        },
+        redirect: "follow",
+      };
 
-    var requestOptions = {
-      method: "GET",
-      headers: {
-        Authorization: "Basic " + base64.encode(username + ":" + password),
-        "If-Modified-Since": "",
-      },
-      redirect: "follow",
-    };
+      const response = await fetch(
+        `https://frc-api.firstinspires.org/v3.0/2024/schedule/${codeText}?tournamentLevel=qual`,
+        requestOptions
+      );
 
-    const response = await fetch(
-      `https://frc-api.firstinspires.org/v3.0/2024/schedule/${codeText}?tournamentLevel=qual`,
-      requestOptions
-    )
-      .then((res) => res.text())
-      .then((data) => {
-        setJsonText(data);
-      })
-      .catch((error) => console.log(error));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.text();
+      setJsonText(data);
+      return data;
+    } catch (error) {
+      console.error('Error in getMatchSchedule:', error);
+      return null;
+    }
   }
 
   function onDriverstationPressed(driverstation) {
@@ -257,7 +284,8 @@ const SettingsScreen = props => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      {/* Sticky Header */}
+      <View style={styles.headerContainer}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -267,15 +295,24 @@ const SettingsScreen = props => {
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
         </View>
+      </View>
 
-        {/* QR Scanner Section */}
+      {/* Main Content */}
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        {/* Import Match Schedule Section - Combined */}
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Import Match Schedule</Text>
+          <Text style={styles.warning}>DO NOT TOUCH IF AT EVENT</Text>
+          
           <TouchableOpacity
             style={styles.scanButton}
             onPress={handleScanClicked}
           >
             <Text style={styles.buttonText}>
-              {shouldScan ? "Stop Scanning" : "Scan Event Match Schedule"}
+              {shouldScan ? "Stop Scanning" : "Scan QR Code"}
             </Text>
           </TouchableOpacity>
 
@@ -290,18 +327,15 @@ const SettingsScreen = props => {
               />
             </View>
           )}
-        </View>
 
-        {/* Event Code Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Event Code</Text>
-          <Text style={styles.warning}>DO NOT TOUCH IF AT EVENT</Text>
+          <Text style={styles.orText}>- OR -</Text>
+
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
               onChangeText={setCodeText}
               value={codeText}
-              placeholder="Event Code"
+              placeholder="Enter Event Code"
               placeholderTextColor="rgba(255, 215, 0, 0.5)"
             />
             {showScheduleCheckmark && (
@@ -311,11 +345,12 @@ const SettingsScreen = props => {
               />
             )}
           </View>
+          
           <TouchableOpacity
             style={styles.importButton}
             onPress={downloadMatchSchedule}
           >
-            <Text style={styles.buttonText}>Import Event Match Schedule</Text>
+            <Text style={styles.buttonText}>Import Using Event Code</Text>
           </TouchableOpacity>
         </View>
 
@@ -394,23 +429,46 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff00d",
   },
 
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
+  headerContainer: {
+    backgroundColor: '#fff00d',
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+    height: Platform.OS === "android" ? 
+      StatusBar.currentHeight + 50 : 
+      60,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Platform.OS === "android" ? StatusBar.currentHeight + 20 : 20,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    position: 'absolute',
+    bottom: 15,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 15,
+  },
+
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff00d',
+  },
+
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
+
+  title: {
+    flex: 1,
+    fontSize: 28,
+    fontFamily: 'Cooper-Black',
+    color: "#000000",
+    textAlign: "center",
+    marginRight: 32,
   },
 
   backButton: {
-    position: 'absolute',
-    left: 10,
-    zIndex: 1,
     backgroundColor: '#000000',
     width: 32,
     height: 32,
@@ -432,14 +490,6 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontWeight: 'bold',
     marginTop: -2,
-  },
-
-  title: {
-    flex: 1,
-    fontSize: 36,
-    fontFamily: 'Cooper-Black',
-    color: "#000000",
-    textAlign: "center",
   },
 
   section: {
@@ -498,6 +548,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop: 10,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -664,6 +715,14 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  orText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#666',
+    fontWeight: 'bold',
+    marginVertical: 16,
   },
 });
 
