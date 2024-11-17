@@ -61,6 +61,8 @@ const SettingsScreen = props => {
   const [orientation, setOrientation] = useState('portrait');
   const [isTablet, setIsTablet] = useState(false);
 
+  const [loadedEventCode, setLoadedEventCode] = useState(null);
+
   useEffect(() => {
     const updateLayout = () => {
       const dim = Dimensions.get('screen');
@@ -123,6 +125,17 @@ const SettingsScreen = props => {
           let tmp = await FileSystem.getInfoAsync(scheduleFileUri);
           console.log(`Match Schedule Exists: ${tmp.exists}`);
           setMatchScheduleExists(tmp.exists);
+          
+          if (tmp.exists) {
+            try {
+              const scheduleData = await FileSystem.readAsStringAsync(scheduleFileUri);
+              const parsedData = JSON.parse(scheduleData);
+              const eventCode = parsedData.eventCode || parsedData.Schedule?.[0]?.eventCode;
+              setLoadedEventCode(eventCode);
+            } catch (err) {
+              console.log("Error reading event code:", err);
+            }
+          }
       }
 
       getCameraPermissions();
@@ -146,14 +159,12 @@ const SettingsScreen = props => {
 
       console.log(`Type: ${type}, Data: ${data}`);
 
-      // const csvtojson = require('csvtojson');
-      // csvtojson()
-      // .fromString(data)
-      // .then((json: any) => {console.log(json)})
-
       let csvArray = data.split('\\n');
       
-      let result = {"Schedule": []};
+      let result = {
+        "Schedule": [],
+        "eventCode": codeText
+      };
       let headers = csvArray[0].split(",");
 
       for (let i = 1; i < csvArray.length - 1; i++) {
@@ -178,6 +189,7 @@ const SettingsScreen = props => {
       
       await FileSystem.writeAsStringAsync(scheduleCsvUri, JSON.stringify(result));
       setShowScheduleCheckmark(true);
+      setLoadedEventCode(codeText);
       console.log(JSON.stringify(JSON.parse(await FileSystem.readAsStringAsync(scheduleCsvUri)), null, '\t'));
   }
 
@@ -231,7 +243,7 @@ const SettingsScreen = props => {
     }
 
     try {
-      setShowScheduleCheckmark(false); // Reset checkmark
+      setShowScheduleCheckmark(false);
       const data = await getMatchSchedule();
       
       if (!data) {
@@ -240,12 +252,13 @@ const SettingsScreen = props => {
       }
 
       try {
-        // Verify the data is valid JSON before saving
         const parsedData = JSON.parse(data);
+        parsedData.eventCode = codeText;
         const formattedJSON = JSON.stringify(parsedData, null, "\t");
         
         await FileSystem.writeAsStringAsync(scheduleFileUri, formattedJSON);
         setShowScheduleCheckmark(true);
+        setLoadedEventCode(codeText);
         console.log('Match schedule saved successfully');
       } catch (e) {
         alert('Invalid data received from the server. Please try again.');
@@ -353,6 +366,13 @@ const SettingsScreen = props => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Import Match Schedule</Text>
           <Text style={styles.warning}>DO NOT TOUCH IF AT EVENT</Text>
+          
+          {loadedEventCode && (
+            <View style={styles.eventCodeDisplay}>
+              <Text style={styles.eventCodeLabel}>Current Event:</Text>
+              <Text style={styles.eventCodeText}>{loadedEventCode}</Text>
+            </View>
+          )}
           
           <TouchableOpacity
             style={styles.scanButton}
@@ -505,6 +525,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     backgroundColor: '#fff00d',
+    paddingTop: 20,
   },
 
   scrollViewContent: {
@@ -775,6 +796,28 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: 'bold',
     marginVertical: 16,
+  },
+
+  eventCodeDisplay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  eventCodeLabel: {
+    fontSize: 16,
+    color: '#666666',
+    marginRight: 8,
+  },
+
+  eventCodeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
   },
 });
 
