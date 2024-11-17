@@ -232,16 +232,10 @@ const MatchScreen = props => {
                 />
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
-                    style={[styles.modalButton, styles.cancelButton]}
+                    style={[styles.modalButton, styles.cancelButton, { flex: 1 }]}
                     onPress={() => setIsCommentModalVisible(false)}
                   >
                     <Text style={styles.modalButtonText}>Close</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.saveButton]}
-                    onPress={() => setIsCommentModalVisible(false)}
-                  >
-                    <Text style={styles.modalButtonText}>Save</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -612,11 +606,10 @@ const styles = StyleSheet.create({
 
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
 
   modalButton: {
-    flex: 0.48,
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',
@@ -624,10 +617,6 @@ const styles = StyleSheet.create({
 
   cancelButton: {
     backgroundColor: '#666666',
-  },
-
-  saveButton: {
-    backgroundColor: '#000000',
   },
 
   modalButtonText: {

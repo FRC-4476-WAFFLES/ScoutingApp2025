@@ -156,7 +156,7 @@ const PregameScreen = props => {
               >
                 <Text style={styles.backButtonText}>←</Text>
               </TouchableOpacity>
-              <Text style={styles.title}>Pre-Game</Text>
+              <Text style={[styles.title, { marginHorizontal: 32 }]}>Pre-Game</Text>
               <TouchableOpacity
                 style={styles.commentButton}
                 onPress={() => setIsCommentModalVisible(true)}
@@ -505,7 +505,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Cooper-Black',
     color: "#000000",
     textAlign: "center",
-    marginRight: 32,
   },
 
   backButton: {
@@ -732,19 +731,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   commentIcon: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
+    tintColor: '#FFD700',
   },
 
   nameModalInput: {
