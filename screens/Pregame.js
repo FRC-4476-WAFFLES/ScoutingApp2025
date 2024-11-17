@@ -9,11 +9,13 @@ import {
     Platform,
     TouchableOpacity,
     TextInput,
-    Modal
+    Modal,
+    Image,
+    TouchableWithoutFeedback,
+    Keyboard
 } from "react-native";
 
 import * as FileSystem from "expo-file-system";
-import Animated, { withSpring } from 'react-native-reanimated';
 
 const getAllianceColor = (driverStation) => {
   if (!driverStation) return null;
@@ -33,6 +35,11 @@ const PregameScreen = props => {
 
   const [isNameModalVisible, setIsNameModalVisible] = useState(false);
   const [tempScoutName, setTempScoutName] = useState('');
+
+  const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
+  const [commentValue, setCommentValue] = useState('');
+
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const scheduleFileUri = `${
       FileSystem.documentDirectory
@@ -85,6 +92,33 @@ const PregameScreen = props => {
     loadScoutInfo();
   }, []);
 
+  React.useEffect(() => {
+    const loadExistingComment = async () => {
+      if (!isInitialized && matchNum) {
+        try {
+          const csvURI = `${FileSystem.documentDirectory}match${matchNum}.csv`;
+          const exists = await FileSystem.getInfoAsync(csvURI);
+          
+          if (exists.exists) {
+            const data = await FileSystem.readAsStringAsync(csvURI);
+            const values = data.split(',');
+            const existingComment = values[values.length - 1];
+            
+            if (existingComment && existingComment !== "0") {
+              setCommentValue(existingComment.replace(/^"|"$/g, ''));
+            }
+          }
+          
+          setIsInitialized(true);
+        } catch (error) {
+          console.error('Error loading existing comment:', error);
+        }
+      }
+    };
+
+    loadExistingComment();
+  }, [matchNum, isInitialized]);
+
   const openNameModal = () => {
     setTempScoutName(scoutName || '');
     setIsNameModalVisible(true);
@@ -111,168 +145,221 @@ const PregameScreen = props => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Pre-Game</Text>
-        </View>
-      </View>
-
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
-      >
-        {/* Match Info Row */}
-        <View style={styles.rowContainer}>
-          {/* Match Number Section */}
-          <View style={[styles.section, styles.halfSection]}>
-            <Text style={styles.sectionTitle}>Match Number</Text>
-            <TextInput
-              style={styles.input}
-              onChangeText={text => { setMatchNum(parseInt(text)) }}
-              value={matchNum ? String(matchNum) : undefined}
-              placeholder="Enter match..."
-              placeholderTextColor="rgba(255, 215, 0, 0.5)"
-              keyboardType="numeric"
-            />
-            
-            <TouchableOpacity 
-              style={styles.findButton}
-              onPress={async () => await findMatch()}
-            >
-              <Text style={styles.buttonText}>Find Match</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Team Display Section */}
-          <View style={[styles.section, styles.halfSection]}>
-            <Text style={styles.sectionTitle}>Your Team</Text>
-            <View style={[
-              styles.teamContainer,
-              driverStation && { backgroundColor: getAllianceColor(driverStation) }
-            ]}>
-              {teamNum ? (
-                <Text style={[
-                  styles.teamNumber,
-                  { color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc' }
-                ]}>{teamNum}</Text>
-              ) : (
-                <Text style={styles.label}>
-                  Enter match number and press Find Match
-                </Text>
-              )}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{flex: 1}}>
+          {/* Header */}
+          <View style={styles.headerContainer}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.backButtonText}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.title}>Pre-Game</Text>
+              <TouchableOpacity
+                style={styles.commentButton}
+                onPress={() => setIsCommentModalVisible(true)}
+              >
+                <Image
+                  source={require("../assets/images/comment-icon.png")}
+                  style={styles.commentIcon}
+                />
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
 
-        {/* Scout Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Scout Information</Text>
-          
-          {/* Scout Name Button */}
-          <TouchableOpacity 
-            style={styles.scoutNameButton}
-            onPress={openNameModal}
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.scoutNameText}>
-              {scoutName || 'Set Scout Name...'}
-            </Text>
-          </TouchableOpacity>
-          
-          {/* Driver Station Display */}
-          <View style={[
-            styles.stationDisplay,
-            driverStation && {
-              backgroundColor: driverStation?.charAt(0) === 'R' ? 
-                'rgba(255, 0, 0, 0.1)' : 
-                'rgba(0, 0, 255, 0.1)',
-            }
-          ]}>
-            <Text style={[
-              styles.stationText,
-              driverStation && {
-                color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc'
-              }
-            ]}>
-              {driverStation || 'Driver Station Not Set'}
-            </Text>
-          </View>
+            {/* Match Info Row */}
+            <View style={styles.rowContainer}>
+              {/* Match Number Section */}
+              <View style={[styles.section, styles.halfSection]}>
+                <Text style={styles.sectionTitle}>Match Number</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={text => { setMatchNum(parseInt(text)) }}
+                  value={matchNum ? String(matchNum) : undefined}
+                  placeholder="Enter match..."
+                  placeholderTextColor="rgba(255, 215, 0, 0.5)"
+                  keyboardType="numeric"
+                />
+                
+                <TouchableOpacity 
+                  style={styles.findButton}
+                  onPress={async () => await findMatch()}
+                >
+                  <Text style={styles.buttonText}>Find Match</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Scout Name Edit Modal */}
+              {/* Team Display Section */}
+              <View style={[styles.section, styles.halfSection]}>
+                <Text style={styles.sectionTitle}>Your Team</Text>
+                <View style={[
+                  styles.teamContainer,
+                  driverStation && { backgroundColor: getAllianceColor(driverStation) }
+                ]}>
+                  {teamNum ? (
+                    <Text style={[
+                      styles.teamNumber,
+                      { color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc' }
+                    ]}>{teamNum}</Text>
+                  ) : (
+                    <Text style={styles.label}>
+                      Enter match number and press Find Match
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            {/* Scout Info Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Scout Information</Text>
+              
+              {/* Scout Name Button */}
+              <TouchableOpacity 
+                style={styles.scoutNameButton}
+                onPress={openNameModal}
+              >
+                <Text style={styles.scoutNameText}>
+                  {scoutName || 'Set Scout Name...'}
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Driver Station Display */}
+              <View style={[
+                styles.stationDisplay,
+                driverStation && {
+                  backgroundColor: driverStation?.charAt(0) === 'R' ? 
+                    'rgba(255, 0, 0, 0.1)' : 
+                    'rgba(0, 0, 255, 0.1)',
+                }
+              ]}>
+                <Text style={[
+                  styles.stationText,
+                  driverStation && {
+                    color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc'
+                  }
+                ]}>
+                  {driverStation || 'Driver Station Not Set'}
+                </Text>
+              </View>
+
+              {/* Scout Name Edit Modal */}
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={isNameModalVisible}
+                onRequestClose={() => setIsNameModalVisible(false)}
+              >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                  <View style={styles.modalOverlay}>
+                    <TouchableWithoutFeedback>
+                      <View style={[styles.modalContent, { marginTop: '10%' }]}>
+                        <Text style={styles.modalTitle}>Edit Scout Name</Text>
+                        <TextInput
+                          style={styles.nameModalInput}
+                          value={tempScoutName}
+                          onChangeText={setTempScoutName}
+                          placeholder="Enter scout name..."
+                          placeholderTextColor="rgba(255, 215, 0, 0.5)"
+                          textAlign="center"
+                          autoFocus={true}
+                        />
+                        <View style={styles.modalButtons}>
+                          <TouchableOpacity
+                            style={[styles.modalButton, styles.cancelButton]}
+                            onPress={() => setIsNameModalVisible(false)}
+                          >
+                            <Text style={styles.modalButtonText}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.modalButton, styles.saveButton]}
+                            onPress={saveNameAndClose}
+                          >
+                            <Text style={styles.modalButtonText}>Save</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </View>
+                </TouchableWithoutFeedback>
+              </Modal>
+            </View>
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                (!matchNum || !teamNum) && styles.submitButtonDisabled
+              ]}
+              onPress={async () => {
+                if (!matchNum || !teamNum) {
+                  alert('Please enter a match number and find your team first');
+                  return;
+                }
+                try {
+                  await submitPrematch();
+                  navigation.navigate("Match", {
+                    matchNum: matchNum,
+                    teamNum: teamNum,
+                  });
+                } catch (error) {
+                  console.error('Error in submitPrematch:', error);
+                  alert('Error starting match. Please check your settings and try again.');
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>Start Match</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Comment Modal */}
           <Modal
             animationType="fade"
             transparent={true}
-            visible={isNameModalVisible}
-            onRequestClose={() => setIsNameModalVisible(false)}
+            visible={isCommentModalVisible}
+            onRequestClose={() => setIsCommentModalVisible(false)}
           >
-            <View style={[styles.modalOverlay, { justifyContent: 'flex-start' }]}>
-              <Animated.View 
-                style={[
-                  styles.modalContent, 
-                  { marginTop: '30%' }
-                ]}
-              >
-                <Text style={styles.modalTitle}>Edit Scout Name</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={tempScoutName}
-                  onChangeText={setTempScoutName}
-                  placeholder="Enter scout name..."
-                  placeholderTextColor="rgba(255, 215, 0, 0.5)"
-                  textAlign="center"
-                  autoFocus={true}
-                />
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.cancelButton]}
-                    onPress={() => setIsNameModalVisible(false)}
-                  >
-                    <Text style={styles.modalButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.saveButton]}
-                    onPress={saveNameAndClose}
-                  >
-                    <Text style={styles.modalButtonText}>Save</Text>
-                  </TouchableOpacity>
-                </View>
-              </Animated.View>
-            </View>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Pre-Game Comments</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      multiline
+                      value={commentValue}
+                      onChangeText={setCommentValue}
+                      placeholder="Enter pre-game comments..."
+                      placeholderTextColor="rgba(255, 215, 0, 0.5)"
+                    />
+                    <View style={styles.modalButtons}>
+                      <TouchableOpacity
+                        style={[styles.modalButton, styles.cancelButton]}
+                        onPress={() => setIsCommentModalVisible(false)}
+                      >
+                        <Text style={styles.modalButtonText}>Close</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.modalButton, styles.saveButton]}
+                        onPress={() => setIsCommentModalVisible(false)}
+                      >
+                        <Text style={styles.modalButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
           </Modal>
         </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            (!matchNum || !teamNum) && styles.submitButtonDisabled
-          ]}
-          onPress={async () => {
-            if (!matchNum || !teamNum) {
-              alert('Please enter a match number and find your team first');
-              return;
-            }
-            try {
-              await submitPrematch();
-              navigation.navigate("Match", {
-                matchNum: matchNum,
-                teamNum: teamNum,
-              });
-            } catch (error) {
-              console.error('Error in submitPrematch:', error);
-              alert('Error starting match. Please check your settings and try again.');
-            }
-          }}
-        >
-          <Text style={styles.buttonText}>Start Match</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 
@@ -339,6 +426,8 @@ const PregameScreen = props => {
           return;
         }
       });
+
+      setIsInitialized(false);
   }
 
   async function submitPrematch() {
@@ -363,7 +452,9 @@ const PregameScreen = props => {
   
       let tmaKey = `${team}-${allianceKey}`;
   
-      let csvText = `${team},${match},${tmaKey},${position},${alliance},${scout},`;
+      let csvText = `${team},${match},${tmaKey},${position},${alliance},${scout},${
+        commentValue === `` ? 0 : `"${commentValue}"`
+      }`;
   
       let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
       await FileSystem.writeAsStringAsync(csvURI, csvText);
@@ -543,23 +634,18 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
   },
 
   modalContent: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
     padding: 24,
-    width: '80%',
+    width: '90%',
     maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 5,
+    maxHeight: '80%',
   },
 
   modalTitle: {
@@ -575,8 +661,9 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     borderRadius: 12,
     padding: 16,
-    fontSize: 18,
-    fontWeight: 'bold',
+    height: 300,
+    fontSize: 16,
+    textAlignVertical: 'top',
     marginBottom: 16,
   },
 
@@ -636,6 +723,39 @@ const styles = StyleSheet.create({
     minHeight: 100,
     borderRadius: 12,
     padding: 10,
+  },
+
+  commentButton: {
+    backgroundColor: '#000000',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  commentIcon: {
+    width: 24,
+    height: 24,
+  },
+
+  nameModalInput: {
+    backgroundColor: '#1a1a1a',
+    color: '#FFD700',
+    borderRadius: 12,
+    padding: 16,
+    height: 50,
+    fontSize: 16,
+    textAlignVertical: 'center',
+    marginBottom: 16,
   },
 });
 
