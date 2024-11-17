@@ -39,7 +39,8 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-barcode-scanner"
     ],
     "newArchEnabled": true,
     "fonts": [

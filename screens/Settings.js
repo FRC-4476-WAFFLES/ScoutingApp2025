@@ -15,17 +15,10 @@ import {
   Alert,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
-import { Camera } from 'expo-camera';
 
 
 const SettingsScreen = props => {
   const { navigation, route } = props;
-
-  const [hasPermissions, setHasPermission] = useState(null);
-  const [scanned, setScanned] = useState(false);
-
-  const [shouldScan, setShouldScan] = React.useState(false);
-  const [text, setText] = React.useState("Not yet scanned.")
 
   const [codeText, setCodeText] = React.useState();
   const [nameText, setNameText] = React.useState();
@@ -78,141 +71,45 @@ const SettingsScreen = props => {
     };
   }, []);
 
-  const requestCameraPermission = async () => {
-    try {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      if (status === "granted") {
-        setHasPermission(true);
-      } else {
-        setHasPermission(false);
-        alert("Camera permission is needed to scan QR codes");
-      }
-    } catch (err) {
-      console.warn(err);
-      setHasPermission(false);
-    }
-  };
-
   React.useEffect(() => {
-      const getCameraPermissions = async () => {
-        const { status } = await Camera.getCameraPermissionsAsync();
-        if (status !== 'granted') {
-          await requestCameraPermission();
-        } else {
-          setHasPermission(true);
+    const setSettingsVars = async () => {
+        try {
+            let settingsJSON = await JSON.parse(
+                await FileSystem.readAsStringAsync(settingsFileUri)
+            );
+            const name = await settingsJSON["Settings"]["scoutName"];
+            const station = await settingsJSON["Settings"]["driverStation"];
+            setNameText(name);
+            setDriverstation(station);
+            setInitialValues({
+              nameText: name,
+              driverstation: station,
+            });
+        } catch (err) {
+            console.log("No Settings File Saved.");
         }
-      };
-
-      const setSettingsVars = async () => {
-          try {
-              let settingsJSON = await JSON.parse(
-                  await FileSystem.readAsStringAsync(settingsFileUri)
-              );
-              const name = await settingsJSON["Settings"]["scoutName"];
-              const station = await settingsJSON["Settings"]["driverStation"];
-              setNameText(name);
-              setDriverstation(station);
-              setInitialValues({
-                nameText: name,
-                driverstation: station,
-              });
-          } catch (err) {
-              console.log("No Settings File Saved.");
-          }
-      }
-
-      const checkMatchScheduleExists = async () => {
-          let tmp = await FileSystem.getInfoAsync(scheduleFileUri);
-          console.log(`Match Schedule Exists: ${tmp.exists}`);
-          setMatchScheduleExists(tmp.exists);
-          
-          if (tmp.exists) {
-            try {
-              const scheduleData = await FileSystem.readAsStringAsync(scheduleFileUri);
-              const parsedData = JSON.parse(scheduleData);
-              const eventCode = parsedData.eventCode || parsedData.Schedule?.[0]?.eventCode;
-              setLoadedEventCode(eventCode);
-            } catch (err) {
-              console.log("Error reading event code:", err);
-            }
-          }
-      }
-
-      getCameraPermissions();
-      setSettingsVars();
-      checkMatchScheduleExists();
-  }, []);
-
-  const barcodeScanCheck = async ({type, data}) => {
-    setScanned(true);
-    setShouldScan(false);
-    alert(`Bar code with type ${type} and data ${data} has been scanned!`);
-  }
-
-  const handleBarCodeScanned = async ({type, data}) => {
-      setScanned(true);
-
-      data = 'Match,R1,R2,R3,B1,B2,B3\\n' + data;
-      setText(data);
-
-      setShouldScan(false);
-
-      console.log(`Type: ${type}, Data: ${data}`);
-
-      let csvArray = data.split('\\n');
-      
-      let result = {
-        "Schedule": [],
-        "eventCode": codeText
-      };
-      let headers = csvArray[0].split(",");
-
-      for (let i = 1; i < csvArray.length - 1; i++) {
-          let values = csvArray[i].split(',');
-
-          let obj = {
-              "Match": values[0],
-              "Teams": []
-          }
-          
-          for (let j = 1; j < headers.length; j++) {
-              let teamobj = {
-                  "station": headers[j],
-                  "teamNumber": parseInt(values[j]),
-              }
-              
-              obj["Teams"].push(teamobj);
-          }
-
-          result.Schedule.push(obj);
-      }
-      
-      await FileSystem.writeAsStringAsync(scheduleCsvUri, JSON.stringify(result));
-      setShowScheduleCheckmark(true);
-      setLoadedEventCode(codeText);
-      console.log(JSON.stringify(JSON.parse(await FileSystem.readAsStringAsync(scheduleCsvUri)), null, '\t'));
-  }
-
-  const handleScanClicked = async () => {
-    // Check camera permission when scan is clicked
-    if (!hasPermissions) {
-      const { status } = await Camera.getCameraPermissionsAsync();
-      if (status !== 'granted') {
-        const result = await Camera.requestCameraPermissionsAsync();
-        if (result.status !== 'granted') {
-          alert('Camera permission is needed to scan QR codes');
-          return;
-        } else {
-          setHasPermission(true);
-        }
-      } else {
-        setHasPermission(true);
-      }
     }
-    
-    setShouldScan(!shouldScan);
-    setScanned(false);
-  }
+
+    const checkMatchScheduleExists = async () => {
+        let tmp = await FileSystem.getInfoAsync(scheduleFileUri);
+        console.log(`Match Schedule Exists: ${tmp.exists}`);
+        setMatchScheduleExists(tmp.exists);
+        
+        if (tmp.exists) {
+          try {
+            const scheduleData = await FileSystem.readAsStringAsync(scheduleFileUri);
+            const parsedData = JSON.parse(scheduleData);
+            const eventCode = parsedData.eventCode || parsedData.Schedule?.[0]?.eventCode;
+            setLoadedEventCode(eventCode);
+          } catch (err) {
+            console.log("Error reading event code:", err);
+          }
+        }
+    }
+
+    setSettingsVars();
+    checkMatchScheduleExists();
+  }, []);
 
   async function fetchScheduleJSON() {
     setShowMatchSchedule(!showMatchSchedule);
@@ -374,29 +271,6 @@ const SettingsScreen = props => {
             </View>
           )}
           
-          <TouchableOpacity
-            style={styles.scanButton}
-            onPress={handleScanClicked}
-          >
-            <Text style={styles.buttonText}>
-              {shouldScan ? "Stop Scanning" : "Scan QR Code"}
-            </Text>
-          </TouchableOpacity>
-
-          {shouldScan && hasPermissions && (
-            <View style={styles.cameraContainer}>
-              <Camera
-                onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-                barcodeScannerSettings={{
-                  barCodeTypes: ["qr"],
-                }}
-                style={styles.camera}
-              />
-            </View>
-          )}
-
-          <Text style={styles.orText}>- OR -</Text>
-
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -616,22 +490,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 
-  scanButton: {
-    backgroundColor: '#000000',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-
   importButton: {
     backgroundColor: '#000000',
     padding: 16,
@@ -652,20 +510,6 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-
-  cameraContainer: {
-    aspectRatio: 1,
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center',
-    marginTop: 20,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-
-  camera: {
-    flex: 1,
   },
 
   stationButton: {
