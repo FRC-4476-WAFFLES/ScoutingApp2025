@@ -12,6 +12,7 @@ import {
   Platform,
   StatusBar,
   Button,
+  Alert,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { Camera } from 'expo-camera';
@@ -37,6 +38,12 @@ const SettingsScreen = props => {
   
   const [matchScheduleString, setMatchScheduleString] = React.useState();
   const [showScheduleCheckmark, setShowScheduleCheckmark] = React.useState(false);
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialValues, setInitialValues] = useState({
+    nameText: undefined,
+    driverstation: undefined,
+  });
 
   const scheduleFileUri = `${
       FileSystem.documentDirectory
@@ -99,8 +106,14 @@ const SettingsScreen = props => {
               let settingsJSON = await JSON.parse(
                   await FileSystem.readAsStringAsync(settingsFileUri)
               );
-              setNameText(await settingsJSON["Settings"]["scoutName"]);
-              setDriverstation(await settingsJSON["Settings"]["driverStation"]);
+              const name = await settingsJSON["Settings"]["scoutName"];
+              const station = await settingsJSON["Settings"]["driverStation"];
+              setNameText(name);
+              setDriverstation(station);
+              setInitialValues({
+                nameText: name,
+                driverstation: station,
+              });
           } catch (err) {
               console.log("No Settings File Saved.");
           }
@@ -277,10 +290,44 @@ const SettingsScreen = props => {
     }
   }
 
-  function onDriverstationPressed(driverstation) {
-    setDriverstation(driverstation);
+  const handleNameChange = (text) => {
+    setNameText(text);
+    setHasUnsavedChanges(
+      text !== initialValues.nameText || 
+      driverstation !== initialValues.driverstation
+    );
+  };
+
+  const handleDriverstationChange = (station) => {
+    setDriverstation(station);
     setShowPicker(false);
-  }
+    setHasUnsavedChanges(
+      nameText !== initialValues.nameText || 
+      station !== initialValues.driverstation
+    );
+  };
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      Alert.alert(
+        "Unsaved Changes",
+        "You have unsaved changes. Are you sure you want to go back?",
+        [
+          {
+            text: "Stay",
+            style: "cancel"
+          },
+          {
+            text: "Discard Changes",
+            style: "destructive",
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -289,7 +336,7 @@ const SettingsScreen = props => {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={handleBackPress}
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
@@ -360,7 +407,7 @@ const SettingsScreen = props => {
           <Text style={styles.warning}>*MUST SET</Text>
           <TextInput
             style={styles.input}
-            onChangeText={setNameText}
+            onChangeText={handleNameChange}
             value={nameText == "undefined" ? undefined : nameText}
             placeholder="Scout Name"
             placeholderTextColor="rgba(255, 215, 0, 0.5)"
@@ -387,7 +434,7 @@ const SettingsScreen = props => {
                   <TouchableOpacity 
                     key={station}
                     style={styles.stationOption}
-                    onPress={() => onDriverstationPressed(station)}
+                    onPress={() => handleDriverstationChange(station)}
                   >
                     <Text style={styles.stationOptionText}>{station}</Text>
                   </TouchableOpacity>
@@ -398,7 +445,7 @@ const SettingsScreen = props => {
                   <TouchableOpacity 
                     key={station}
                     style={styles.stationOption}
-                    onPress={() => onDriverstationPressed(station)}
+                    onPress={() => handleDriverstationChange(station)}
                   >
                     <Text style={styles.stationOptionText}>{station}</Text>
                   </TouchableOpacity>
@@ -413,6 +460,11 @@ const SettingsScreen = props => {
           style={styles.saveButton}
           onPress={async () => {
             await saveSettings();
+            setHasUnsavedChanges(false);
+            setInitialValues({
+              nameText,
+              driverstation,
+            });
             navigation.navigate("Home");
           }}
         >
