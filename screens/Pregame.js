@@ -369,6 +369,7 @@ const PregameScreen = props => {
                   navigation.navigate("Match", {
                     matchNum: matchNum,
                     teamNum: teamNum,
+                    hpAtProcessor: hpAtProcessor,
                   });
                 } catch (error) {
                   console.error('Error in submitPrematch:', error);

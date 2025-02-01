@@ -374,6 +374,7 @@ const MatchScreen = props => {
     console.log(`currData: ${currData}`)
 
     // Add the new data fields
+    currData += `${route.params.hpAtProcessor ? 1 : 0},`;  // Add HP at Processor value
     currData += `${autoL1Coral},${autoL2Coral},${autoL3Coral},${autoL4Coral},${autoAlgaeProcessor},${autoAlgaeNet},`;
     currData += `${teleOpL1Coral},${teleOpL2Coral},${teleOpL3Coral},${teleOpL4Coral},${teleOpAlgaeProcessor},${teleOpAlgaeNet},`;
     currData += `${removedAlgae ? 1 : 0},`;  // Add the removedAlgae boolean as 1 or 0
