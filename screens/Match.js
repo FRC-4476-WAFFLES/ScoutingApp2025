@@ -17,6 +17,7 @@ import {
 
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from 'expo-clipboard';
+import Checkbox from 'expo-checkbox';
 
 const getAllianceColor = (driverStation) => {
   if (!driverStation) return null;
@@ -26,11 +27,21 @@ const getAllianceColor = (driverStation) => {
 const MatchScreen = props => {
   const { navigation, route } = props;
 
-  const [autoSpeaker, setAutoSpeaker] = useState(0);
-  const [autoAmp, setAutoAmp] = useState(0);
+  // Auto state variables
+  const [autoL1Coral, setAutoL1Coral] = useState(0);
+  const [autoL2Coral, setAutoL2Coral] = useState(0);
+  const [autoL3Coral, setAutoL3Coral] = useState(0);
+  const [autoL4Coral, setAutoL4Coral] = useState(0);
+  const [autoAlgaeProcessor, setAutoAlgaeProcessor] = useState(0);
+  const [autoAlgaeNet, setAutoAlgaeNet] = useState(0);
 
-  const [teleOpSpeaker, setTeleOpSpeaker] = useState(0);
-  const [teleOpAmp, setTeleOpAmp] = useState(0);
+  // TeleOp state variables
+  const [teleOpL1Coral, setTeleOpL1Coral] = useState(0);
+  const [teleOpL2Coral, setTeleOpL2Coral] = useState(0);
+  const [teleOpL3Coral, setTeleOpL3Coral] = useState(0);
+  const [teleOpL4Coral, setTeleOpL4Coral] = useState(0);
+  const [teleOpAlgaeProcessor, setTeleOpAlgaeProcessor] = useState(0);
+  const [teleOpAlgaeNet, setTeleOpAlgaeNet] = useState(0);
 
   const [trapNotes, setTrapNotes] = useState(0);
   const [stashNotes, setStashNotes] = useState(0);
@@ -44,6 +55,8 @@ const MatchScreen = props => {
   const [isTeleOpExpanded, setIsTeleOpExpanded] = useState(false);
 
   const [driverStation, setDriverStation] = useState(null);
+
+  const [removedAlgae, setRemovedAlgae] = useState(false);
 
   useEffect(() => {
     const loadExistingComment = async () => {
@@ -158,9 +171,9 @@ const MatchScreen = props => {
           </View>
 
           {/* Auto Section */}
-          <View style={styles.section}>
+          <View style={[styles.section, styles.autoSection]}>
             <TouchableOpacity
-              style={styles.sectionHeader}
+              style={[styles.sectionHeader, styles.autoHeader]}
               onPress={() => setIsAutoExpanded(!isAutoExpanded)}
             >
               <Text style={styles.sectionTitle}>Autonomous</Text>
@@ -172,25 +185,49 @@ const MatchScreen = props => {
             {isAutoExpanded && (
               <View style={styles.sectionContent}>
                 <CounterItem
-                  label="Speaker Notes"
-                  value={autoSpeaker}
-                  onIncrement={() => updateAutoSpeaker(1)}
-                  onDecrement={() => updateAutoSpeaker(-1)}
+                  label="L1 Coral"
+                  value={autoL1Coral}
+                  onIncrement={() => updateAutoL1Coral(1)}
+                  onDecrement={() => updateAutoL1Coral(-1)}
                 />
                 <CounterItem
-                  label="Amp Notes"
-                  value={autoAmp}
-                  onIncrement={() => updateAutoAmp(1)}
-                  onDecrement={() => updateAutoAmp(-1)}
+                  label="L2 Coral"
+                  value={autoL2Coral}
+                  onIncrement={() => updateAutoL2Coral(1)}
+                  onDecrement={() => updateAutoL2Coral(-1)}
+                />
+                <CounterItem
+                  label="L3 Coral"
+                  value={autoL3Coral}
+                  onIncrement={() => updateAutoL3Coral(1)}
+                  onDecrement={() => updateAutoL3Coral(-1)}
+                />
+                <CounterItem
+                  label="L4 Coral"
+                  value={autoL4Coral}
+                  onIncrement={() => updateAutoL4Coral(1)}
+                  onDecrement={() => updateAutoL4Coral(-1)}
+                />
+                <CounterItem
+                  label="Algae Processor"
+                  value={autoAlgaeProcessor}
+                  onIncrement={() => updateAutoAlgaeProcessor(1)}
+                  onDecrement={() => updateAutoAlgaeProcessor(-1)}
+                />
+                <CounterItem
+                  label="Algae Net"
+                  value={autoAlgaeNet}
+                  onIncrement={() => updateAutoAlgaeNet(1)}
+                  onDecrement={() => updateAutoAlgaeNet(-1)}
                 />
               </View>
             )}
           </View>
 
           {/* TeleOp Section */}
-          <View style={styles.section}>
+          <View style={[styles.section, styles.teleOpSection]}>
             <TouchableOpacity
-              style={styles.sectionHeader}
+              style={[styles.sectionHeader, styles.teleOpHeader]}
               onPress={() => setIsTeleOpExpanded(!isTeleOpExpanded)}
             >
               <Text style={styles.sectionTitle}>Tele-Op</Text>
@@ -202,29 +239,54 @@ const MatchScreen = props => {
             {isTeleOpExpanded && (
               <View style={styles.sectionContent}>
                 <CounterItem
-                  label="Speaker Notes"
-                  value={teleOpSpeaker}
-                  onIncrement={() => updateTeleOpSpeaker(1)}
-                  onDecrement={() => updateTeleOpSpeaker(-1)}
+                  label="L1 Coral"
+                  value={teleOpL1Coral}
+                  onIncrement={() => updateTeleOpL1Coral(1)}
+                  onDecrement={() => updateTeleOpL1Coral(-1)}
                 />
                 <CounterItem
-                  label="Amp Notes"
-                  value={teleOpAmp}
-                  onIncrement={() => updateTeleOpAmp(1)}
-                  onDecrement={() => updateTeleOpAmp(-1)}
+                  label="L2 Coral"
+                  value={teleOpL2Coral}
+                  onIncrement={() => updateTeleOpL2Coral(1)}
+                  onDecrement={() => updateTeleOpL2Coral(-1)}
                 />
                 <CounterItem
-                  label="Stashed Notes"
-                  value={stashNotes}
-                  onIncrement={() => updateStashNotes(1)}
-                  onDecrement={() => updateStashNotes(-1)}
+                  label="L3 Coral"
+                  value={teleOpL3Coral}
+                  onIncrement={() => updateTeleOpL3Coral(1)}
+                  onDecrement={() => updateTeleOpL3Coral(-1)}
                 />
                 <CounterItem
-                  label="Trap Notes"
-                  value={trapNotes}
-                  onIncrement={() => updateTrapNotes(1)}
-                  onDecrement={() => updateTrapNotes(-1)}
+                  label="L4 Coral"
+                  value={teleOpL4Coral}
+                  onIncrement={() => updateTeleOpL4Coral(1)}
+                  onDecrement={() => updateTeleOpL4Coral(-1)}
                 />
+                <CounterItem
+                  label="Algae Processor"
+                  value={teleOpAlgaeProcessor}
+                  onIncrement={() => updateTeleOpAlgaeProcessor(1)}
+                  onDecrement={() => updateTeleOpAlgaeProcessor(-1)}
+                />
+                <CounterItem
+                  label="Algae Net"
+                  value={teleOpAlgaeNet}
+                  onIncrement={() => updateTeleOpAlgaeNet(1)}
+                  onDecrement={() => updateTeleOpAlgaeNet(-1)}
+                />
+                <TouchableOpacity 
+                  style={styles.checkboxContainer}
+                  onPress={() => setRemovedAlgae(!removedAlgae)}
+                  activeOpacity={0.7}
+                >
+                  <Checkbox
+                    style={styles.checkbox}
+                    value={removedAlgae}
+                    onValueChange={setRemovedAlgae}
+                    color={removedAlgae ? '#000000' : undefined}
+                  />
+                  <Text style={styles.checkboxLabel}>Removed Algae From Reef</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -282,92 +344,84 @@ const MatchScreen = props => {
   );
 
   async function matchSubmit() {
-      let match = route.params.matchNum;
-      let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
-  
-      let currData = await FileSystem.readAsStringAsync(csvURI);
-      console.log(currData)
-      
-      let commaIndex = 0;
-      let commas = 0;
-      
-      for (let i = 0; i < currData.length; i++) {
-        if (currData.charAt(i) == ',') commas++;
-  
-        if (commas == 6) {
-          commaIndex = i;
-          console.log(commaIndex)
-          break;
-        }
+    let match = route.params.matchNum;
+    let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
+
+    let currData = await FileSystem.readAsStringAsync(csvURI);
+    console.log(currData)
+    
+    let commaIndex = 0;
+    let commas = 0;
+    
+    for (let i = 0; i < currData.length; i++) {
+      if (currData.charAt(i) == ',') commas++;
+
+      if (commas == 6) {
+        commaIndex = i;
+        console.log(commaIndex)
+        break;
       }
-  
-      // Keep the original comment if no new comment was added
-      const originalComment = currData.split(',')[6];
-      const finalComment = commentValue || (originalComment !== "0" ? originalComment : "0");
-  
-      currData = currData.slice(0, commaIndex + 1);
-      console.log(`currData: ${currData}`)
-  
-      currData += `${autoAmp},${autoSpeaker},${teleOpAmp},${teleOpSpeaker},${stashNotes},${trapNotes},${
-        finalComment === `` ? 0 : `"${finalComment}"`
-      }`;
-  
-      await FileSystem.writeAsStringAsync(csvURI, currData);
-      console.log(await FileSystem.readAsStringAsync(csvURI));
-  
-      await Clipboard.setStringAsync(currData);
-  
-      // const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-      // if (status === "granted") {
-      //   console.log(csvURI);
-      //   await FileSystem.writeAsStringAsync(csvURI, currData, { encoding: FileSystem.EncodingType.UTF8 });
-      //   //console.log(await FileSystem.readAsStringAsync(csvURI));
-      //   const asset = await MediaLibrary.createAssetAsync(csvURI)
-      //   await MediaLibrary.createAlbumAsync("Download", asset, false)
-      // }
+    }
+
+    // Keep the original comment if no new comment was added
+    const originalComment = currData.split(',')[6];
+    const finalComment = commentValue || (originalComment !== "0" ? originalComment : "0");
+
+    currData = currData.slice(0, commaIndex + 1);
+    console.log(`currData: ${currData}`)
+
+    // Add the new data fields
+    currData += `${autoL1Coral},${autoL2Coral},${autoL3Coral},${autoL4Coral},${autoAlgaeProcessor},${autoAlgaeNet},`;
+    currData += `${teleOpL1Coral},${teleOpL2Coral},${teleOpL3Coral},${teleOpL4Coral},${teleOpAlgaeProcessor},${teleOpAlgaeNet},`;
+    currData += `${removedAlgae ? 1 : 0},`;  // Add the removedAlgae boolean as 1 or 0
+    currData += `${finalComment === `` ? 0 : `"${finalComment}"`}`;
+
+    await FileSystem.writeAsStringAsync(csvURI, currData);
+    console.log(await FileSystem.readAsStringAsync(csvURI));
+
+    await Clipboard.setStringAsync(currData);
   }
 
   async function getDataString() {
-      let match = route.params.matchNum;
-      let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
-      let dataString = await FileSystem.readAsStringAsync(csvURI);
-  
-      console.log(dataString);
-  
-      return dataString;
+    let match = route.params.matchNum;
+    let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
+    let dataString = await FileSystem.readAsStringAsync(csvURI);
+
+    console.log(dataString);
+
+    return dataString;
   }
   
   function handleCommentClick() {
-      setIsCommentBoxOpen(!isCommentBoxOpen);
+    setIsCommentBoxOpen(!isCommentBoxOpen);
   }
   
   function updateAutoSpeaker(num) {
-      let target = autoSpeaker + num;
-      if (target >= 0) {
-        setAutoSpeaker(target);
-      }
+    let target = autoSpeaker + num;
+    if (target >= 0) {
+      setAutoSpeaker(target);
+    }
   }
   
   function updateAutoAmp(num) {
-      let target = autoAmp + num;
-      if (target >= 0) {
-        setAutoAmp(target);
-      }
+    let target = autoAmp + num;
+    if (target >= 0) {
+      setAutoAmp(target);
+    }
   }
   
   function updateTeleOpSpeaker(num) {
-      let target = teleOpSpeaker + num;
-      if (target >= 0) {
-        setTeleOpSpeaker(target);
-      }
+    let target = teleOpSpeaker + num;
+    if (target >= 0) {
+      setTeleOpSpeaker(target);
+    }
   }
   
   function updateTeleOpAmp(num) {
-      let target = teleOpAmp + num;
-      if (target >= 0) {
-        setTeleOpAmp(target);
-      }
+    let target = teleOpAmp + num;
+    if (target >= 0) {
+      setTeleOpAmp(target);
+    }
   }
 
   function updateStashNotes(num) {
@@ -381,6 +435,90 @@ const MatchScreen = props => {
     let target = trapNotes + num;
     if (target >= 0 && target <= 3) {
       setTrapNotes(target);
+    }
+  }
+
+  function updateAutoL1Coral(num) {
+    let target = autoL1Coral + num;
+    if (target >= 0) {
+      setAutoL1Coral(target);
+    }
+  }
+
+  function updateAutoL2Coral(num) {
+    let target = autoL2Coral + num;
+    if (target >= 0) {
+      setAutoL2Coral(target);
+    }
+  }
+
+  function updateAutoL3Coral(num) {
+    let target = autoL3Coral + num;
+    if (target >= 0) {
+      setAutoL3Coral(target);
+    }
+  }
+
+  function updateAutoL4Coral(num) {
+    let target = autoL4Coral + num;
+    if (target >= 0) {
+      setAutoL4Coral(target);
+    }
+  }
+
+  function updateAutoAlgaeProcessor(num) {
+    let target = autoAlgaeProcessor + num;
+    if (target >= 0) {
+      setAutoAlgaeProcessor(target);
+    }
+  }
+
+  function updateAutoAlgaeNet(num) {
+    let target = autoAlgaeNet + num;
+    if (target >= 0) {
+      setAutoAlgaeNet(target);
+    }
+  }
+
+  function updateTeleOpL1Coral(num) {
+    let target = teleOpL1Coral + num;
+    if (target >= 0) {
+      setTeleOpL1Coral(target);
+    }
+  }
+
+  function updateTeleOpL2Coral(num) {
+    let target = teleOpL2Coral + num;
+    if (target >= 0) {
+      setTeleOpL2Coral(target);
+    }
+  }
+
+  function updateTeleOpL3Coral(num) {
+    let target = teleOpL3Coral + num;
+    if (target >= 0) {
+      setTeleOpL3Coral(target);
+    }
+  }
+
+  function updateTeleOpL4Coral(num) {
+    let target = teleOpL4Coral + num;
+    if (target >= 0) {
+      setTeleOpL4Coral(target);
+    }
+  }
+
+  function updateTeleOpAlgaeProcessor(num) {
+    let target = teleOpAlgaeProcessor + num;
+    if (target >= 0) {
+      setTeleOpAlgaeProcessor(target);
+    }
+  }
+
+  function updateTeleOpAlgaeNet(num) {
+    let target = teleOpAlgaeNet + num;
+    if (target >= 0) {
+      setTeleOpAlgaeNet(target);
     }
   }
 }
@@ -517,6 +655,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
+  autoSection: {
+    backgroundColor: '#fff7eb', // Very subtle warm color for Auto
+  },
+
+  teleOpSection: {
+    backgroundColor: '#ffffff', // Pure white for TeleOp
+  },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -524,6 +670,18 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+
+  autoHeader: {
+    backgroundColor: '#fff2e0', // Slightly darker warm color for header
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+
+  teleOpHeader: {
+    backgroundColor: '#f8f8f8', // Very light gray for header
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 
   sectionTitle: {
@@ -610,16 +768,15 @@ const styles = StyleSheet.create({
   },
 
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
 
   modalContent: {
@@ -629,6 +786,15 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     maxHeight: '80%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1001,
   },
 
   modalTitle: {
@@ -681,6 +847,31 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#666',
+  },
+
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 12,
+  },
+
+  checkbox: {
+    margin: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+  },
+
+  checkboxLabel: {
+    fontSize: 20,
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });
 
