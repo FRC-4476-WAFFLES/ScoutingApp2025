@@ -147,6 +147,21 @@ const MatchScreen = props => {
         </View>
       </View>
 
+      {/* Team Number Header - Now outside ScrollView */}
+      <View style={[
+        styles.teamHeaderContainer,
+        driverStation && { backgroundColor: getAllianceColor(driverStation) }
+      ]}>
+        <Text style={[
+          styles.teamHeader,
+          driverStation && { 
+            color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc'
+          }
+        ]}>
+          Team {route.params.teamNum}
+        </Text>
+      </View>
+
       {/* Main Content */}
       <ScrollView 
         style={styles.scrollView}
@@ -156,20 +171,6 @@ const MatchScreen = props => {
         bounces={true}
       >
         <View style={styles.mainContent}>
-          <View style={[
-            styles.teamHeaderContainer,
-            driverStation && { backgroundColor: getAllianceColor(driverStation) }
-          ]}>
-            <Text style={[
-              styles.teamHeader,
-              driverStation && { 
-                color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc'
-              }
-            ]}>
-              Team {route.params.teamNum}
-            </Text>
-          </View>
-
           {/* Auto Section */}
           <View style={[styles.section, styles.autoSection]}>
             <TouchableOpacity
@@ -185,16 +186,10 @@ const MatchScreen = props => {
             {isAutoExpanded && (
               <View style={styles.sectionContent}>
                 <CounterItem
-                  label="L1 Coral"
-                  value={autoL1Coral}
-                  onIncrement={() => updateAutoL1Coral(1)}
-                  onDecrement={() => updateAutoL1Coral(-1)}
-                />
-                <CounterItem
-                  label="L2 Coral"
-                  value={autoL2Coral}
-                  onIncrement={() => updateAutoL2Coral(1)}
-                  onDecrement={() => updateAutoL2Coral(-1)}
+                  label="L4 Coral"
+                  value={autoL4Coral}
+                  onIncrement={() => updateAutoL4Coral(1)}
+                  onDecrement={() => updateAutoL4Coral(-1)}
                 />
                 <CounterItem
                   label="L3 Coral"
@@ -203,22 +198,29 @@ const MatchScreen = props => {
                   onDecrement={() => updateAutoL3Coral(-1)}
                 />
                 <CounterItem
-                  label="L4 Coral"
-                  value={autoL4Coral}
-                  onIncrement={() => updateAutoL4Coral(1)}
-                  onDecrement={() => updateAutoL4Coral(-1)}
+                  label="L2 Coral"
+                  value={autoL2Coral}
+                  onIncrement={() => updateAutoL2Coral(1)}
+                  onDecrement={() => updateAutoL2Coral(-1)}
                 />
                 <CounterItem
-                  label="Algae Processor"
-                  value={autoAlgaeProcessor}
-                  onIncrement={() => updateAutoAlgaeProcessor(1)}
-                  onDecrement={() => updateAutoAlgaeProcessor(-1)}
+                  label="L1 Coral"
+                  value={autoL1Coral}
+                  onIncrement={() => updateAutoL1Coral(1)}
+                  onDecrement={() => updateAutoL1Coral(-1)}
+                  showDivider={true}
                 />
                 <CounterItem
                   label="Algae Net"
                   value={autoAlgaeNet}
                   onIncrement={() => updateAutoAlgaeNet(1)}
                   onDecrement={() => updateAutoAlgaeNet(-1)}
+                />
+                <CounterItem
+                  label="Algae Processor"
+                  value={autoAlgaeProcessor}
+                  onIncrement={() => updateAutoAlgaeProcessor(1)}
+                  onDecrement={() => updateAutoAlgaeProcessor(-1)}
                 />
               </View>
             )}
@@ -239,16 +241,10 @@ const MatchScreen = props => {
             {isTeleOpExpanded && (
               <View style={styles.sectionContent}>
                 <CounterItem
-                  label="L1 Coral"
-                  value={teleOpL1Coral}
-                  onIncrement={() => updateTeleOpL1Coral(1)}
-                  onDecrement={() => updateTeleOpL1Coral(-1)}
-                />
-                <CounterItem
-                  label="L2 Coral"
-                  value={teleOpL2Coral}
-                  onIncrement={() => updateTeleOpL2Coral(1)}
-                  onDecrement={() => updateTeleOpL2Coral(-1)}
+                  label="L4 Coral"
+                  value={teleOpL4Coral}
+                  onIncrement={() => updateTeleOpL4Coral(1)}
+                  onDecrement={() => updateTeleOpL4Coral(-1)}
                 />
                 <CounterItem
                   label="L3 Coral"
@@ -257,22 +253,29 @@ const MatchScreen = props => {
                   onDecrement={() => updateTeleOpL3Coral(-1)}
                 />
                 <CounterItem
-                  label="L4 Coral"
-                  value={teleOpL4Coral}
-                  onIncrement={() => updateTeleOpL4Coral(1)}
-                  onDecrement={() => updateTeleOpL4Coral(-1)}
+                  label="L2 Coral"
+                  value={teleOpL2Coral}
+                  onIncrement={() => updateTeleOpL2Coral(1)}
+                  onDecrement={() => updateTeleOpL2Coral(-1)}
                 />
                 <CounterItem
-                  label="Algae Processor"
-                  value={teleOpAlgaeProcessor}
-                  onIncrement={() => updateTeleOpAlgaeProcessor(1)}
-                  onDecrement={() => updateTeleOpAlgaeProcessor(-1)}
+                  label="L1 Coral"
+                  value={teleOpL1Coral}
+                  onIncrement={() => updateTeleOpL1Coral(1)}
+                  onDecrement={() => updateTeleOpL1Coral(-1)}
+                  showDivider={true}
                 />
                 <CounterItem
                   label="Algae Net"
                   value={teleOpAlgaeNet}
                   onIncrement={() => updateTeleOpAlgaeNet(1)}
                   onDecrement={() => updateTeleOpAlgaeNet(-1)}
+                />
+                <CounterItem
+                  label="Algae Processor"
+                  value={teleOpAlgaeProcessor}
+                  onIncrement={() => updateTeleOpAlgaeProcessor(1)}
+                  onDecrement={() => updateTeleOpAlgaeProcessor(-1)}
                 />
                 <TouchableOpacity 
                   style={styles.checkboxContainer}
@@ -524,27 +527,30 @@ const MatchScreen = props => {
 }
 
 // Counter component for reusability
-const CounterItem = ({ label, value, onIncrement, onDecrement }) => (
-  <View style={styles.counterContainer}>
-    <Text style={styles.counterLabel}>{label}</Text>
-    <View style={styles.counterControls}>
-      <TouchableOpacity 
-        style={[styles.counterButton, styles.decrementButton]} 
-        onPress={onDecrement}
-      >
-        <Text style={styles.counterButtonText}>−</Text>
-      </TouchableOpacity>
-      <Text style={styles.counterValue}>{value}</Text>
-      <TouchableOpacity 
-        style={[styles.counterButton, styles.incrementButton]} 
-        onPress={onIncrement}
-      >
-        <Image
-          source={require("../assets/images/plus-icon.png")}
-          style={styles.buttonIcon}
-        />
-      </TouchableOpacity>
+const CounterItem = ({ label, value, onIncrement, onDecrement, showDivider }) => (
+  <View>
+    <View style={styles.counterContainer}>
+      <Text style={styles.counterLabel}>{label}</Text>
+      <View style={styles.counterControls}>
+        <TouchableOpacity 
+          style={[styles.counterButton, styles.decrementButton]} 
+          onPress={onDecrement}
+        >
+          <Text style={styles.counterButtonText}>−</Text>
+        </TouchableOpacity>
+        <Text style={styles.counterValue}>{value}</Text>
+        <TouchableOpacity 
+          style={[styles.counterButton, styles.incrementButton]} 
+          onPress={onIncrement}
+        >
+          <Image
+            source={require("../assets/images/plus-icon.png")}
+            style={styles.buttonIcon}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
+    {showDivider && <View style={styles.divider} />}
   </View>
 );
 
@@ -630,9 +636,11 @@ const styles = StyleSheet.create({
   },
 
   teamHeaderContainer: {
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 20,
+    padding: 15,
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+    backgroundColor: '#fff00d',
+    zIndex: 1,
   },
 
   teamHeader: {
@@ -656,37 +664,39 @@ const styles = StyleSheet.create({
   },
 
   autoSection: {
-    backgroundColor: '#fff7eb', // Very subtle warm color for Auto
+    backgroundColor: '#fff0d9', // More noticeable warm color for Auto
   },
 
   teleOpSection: {
-    backgroundColor: '#ffffff', // Pure white for TeleOp
+    backgroundColor: '#ffffff', // Keep TeleOp white
   },
 
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    position: 'relative',
   },
 
   autoHeader: {
-    backgroundColor: '#fff2e0', // Slightly darker warm color for header
+    backgroundColor: '#ffe0b3', // Darker warm color for auto header
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
 
   teleOpHeader: {
-    backgroundColor: '#f8f8f8', // Very light gray for header
+    backgroundColor: '#f0f0f0', // Slightly darker gray for teleop header
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
 
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 
   sectionContent: {
@@ -698,9 +708,10 @@ const styles = StyleSheet.create({
   },
 
   counterLabel: {
-    fontSize: 18,
-    marginBottom: 10,
+    fontSize: 22,
+    marginBottom: 12,
     textAlign: 'center',
+    fontWeight: '500',
   },
 
   counterControls: {
@@ -734,7 +745,7 @@ const styles = StyleSheet.create({
   },
 
   counterValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     minWidth: 50,
     textAlign: 'center',
@@ -847,6 +858,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#666',
+    position: 'absolute',
+    right: 20,
   },
 
   checkboxContainer: {
@@ -872,6 +885,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginLeft: 12,
     fontWeight: '500',
+  },
+
+  divider: {
+    height: 2,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#999',
+    marginVertical: 15,
+    marginHorizontal: 20,
   },
 });
 

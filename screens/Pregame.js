@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 import * as FileSystem from "expo-file-system";
+import Checkbox from 'expo-checkbox';
 
 const getAllianceColor = (driverStation) => {
   if (!driverStation) return null;
@@ -43,6 +44,8 @@ const PregameScreen = props => {
 
   const [maxMatchNum, setMaxMatchNum] = useState(0);
   const [minMatchNum, setMinMatchNum] = useState(1);
+
+  const [hpAtProcessor, setHpAtProcessor] = useState(false);
 
   const scheduleFileUri = `${
       FileSystem.documentDirectory
@@ -258,7 +261,7 @@ const PregameScreen = props => {
             </View>
 
             {/* Scout Info Section */}
-            <View style={styles.section}>
+            <View style={[styles.section, { marginBottom: 24 }]}>
               <Text style={styles.sectionTitle}>Scout Information</Text>
               
               {/* Scout Name Button */}
@@ -289,48 +292,66 @@ const PregameScreen = props => {
                   {driverStation || 'Driver Station Not Set'}
                 </Text>
               </View>
-
-              {/* Scout Name Edit Modal */}
-              <Modal
-                animationType="fade"
-                transparent={true}
-                visible={isNameModalVisible}
-                onRequestClose={() => setIsNameModalVisible(false)}
-              >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                  <View style={styles.modalOverlay}>
-                    <TouchableWithoutFeedback>
-                      <View style={[styles.modalContent, { marginTop: '10%' }]}>
-                        <Text style={styles.modalTitle}>Edit Scout Name</Text>
-                        <TextInput
-                          style={styles.nameModalInput}
-                          value={tempScoutName}
-                          onChangeText={setTempScoutName}
-                          placeholder="Enter scout name..."
-                          placeholderTextColor="rgba(255, 215, 0, 0.5)"
-                          textAlign="center"
-                          autoFocus={true}
-                        />
-                        <View style={styles.modalButtons}>
-                          <TouchableOpacity
-                            style={[styles.modalButton, styles.cancelButton]}
-                            onPress={() => setIsNameModalVisible(false)}
-                          >
-                            <Text style={styles.modalButtonText}>Cancel</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.modalButton, styles.saveButton]}
-                            onPress={saveNameAndClose}
-                          >
-                            <Text style={styles.modalButtonText}>Save</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </TouchableWithoutFeedback>
-                  </View>
-                </TouchableWithoutFeedback>
-              </Modal>
             </View>
+
+            {/* Human Player Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Human Player</Text>
+              <TouchableOpacity 
+                style={styles.checkboxContainer}
+                onPress={() => setHpAtProcessor(!hpAtProcessor)}
+                activeOpacity={0.7}
+              >
+                <Checkbox
+                  style={styles.checkbox}
+                  value={hpAtProcessor}
+                  onValueChange={setHpAtProcessor}
+                  color={hpAtProcessor ? '#000000' : undefined}
+                />
+                <Text style={styles.checkboxLabel}>HP at Processor</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Scout Name Edit Modal */}
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={isNameModalVisible}
+              onRequestClose={() => setIsNameModalVisible(false)}
+            >
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.modalOverlay}>
+                  <TouchableWithoutFeedback>
+                    <View style={[styles.modalContent, { marginTop: '10%' }]}>
+                      <Text style={styles.modalTitle}>Edit Scout Name</Text>
+                      <TextInput
+                        style={styles.nameModalInput}
+                        value={tempScoutName}
+                        onChangeText={setTempScoutName}
+                        placeholder="Enter scout name..."
+                        placeholderTextColor="rgba(255, 215, 0, 0.5)"
+                        textAlign="center"
+                        autoFocus={true}
+                      />
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.cancelButton]}
+                          onPress={() => setIsNameModalVisible(false)}
+                        >
+                          <Text style={styles.modalButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.saveButton]}
+                          onPress={saveNameAndClose}
+                        >
+                          <Text style={styles.modalButtonText}>Save</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
 
             {/* Submit Button */}
             <TouchableOpacity
@@ -504,6 +525,7 @@ const PregameScreen = props => {
       let tmaKey = `${team}-${allianceKey}`;
   
       let csvText = `${team},${match},${tmaKey},${position},${alliance},${scout},${
+        hpAtProcessor ? 1 : 0},${
         commentValue === `` ? 0 : `"${commentValue}"`
       }`;
   
@@ -811,6 +833,31 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'center',
     marginTop: 8,
+  },
+
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 12,
+  },
+
+  checkbox: {
+    margin: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+  },
+
+  checkboxLabel: {
+    fontSize: 20,
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });
 
