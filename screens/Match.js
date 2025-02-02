@@ -18,6 +18,7 @@ import {
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from 'expo-clipboard';
 import Checkbox from 'expo-checkbox';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const getAllianceColor = (driverStation) => {
   if (!driverStation) return null;
@@ -49,6 +50,9 @@ const MatchScreen = props => {
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
   const [commentValue, setCommentValue] = useState('');
 
+  const [isQuestionModalVisible, setIsQuestionModalVisible] = useState(false);
+  const [questionValue, setQuestionValue] = useState('');
+
   const [isInitialized, setIsInitialized] = useState(false);
 
   const [isAutoExpanded, setIsAutoExpanded] = useState(true);
@@ -59,40 +63,79 @@ const MatchScreen = props => {
   const [removedAlgae, setRemovedAlgae] = useState(false);
 
   useEffect(() => {
-    const loadExistingComment = async () => {
-      if (!isInitialized && route.params?.matchNum) {
+    const loadExistingMatchData = async () => {
+      if (route.params?.matchNum) {
+        const csvURI = `${FileSystem.documentDirectory}match${route.params.matchNum}.csv`;
+        
         try {
-          const csvURI = `${FileSystem.documentDirectory}match${route.params.matchNum}.csv`;
+          // First check if file exists
+          const fileInfo = await FileSystem.getInfoAsync(csvURI);
+          if (!fileInfo.exists) {
+            console.log("No existing data file found for match", route.params.matchNum);
+            return;
+          }
+
           const data = await FileSystem.readAsStringAsync(csvURI);
+          console.log("Raw data loaded:", data);
           
-          // Split the CSV and get all values
-          const values = data.split(',');
+          // Split the CSV properly handling quoted values
+          const values = data.split(',').map(val => val.replace(/^"|"$/g, ''));
+          console.log("Split values:", values);
           
-          // Load removed algae value if it exists (index 20)
-          if (values.length > 20) {
-            setRemovedAlgae(values[20] === '1');
-          }
-          
-          // Get the last value which should be the comment
-          const existingComment = values[values.length - 1];
-          
-          // If comment exists and isn't empty, set it (remove quotes if present)
-          if (existingComment && existingComment !== `""`) {
-            setCommentValue(existingComment.replace(/^"|"$/g, ''));
+          // Only proceed if we have the minimum required values (team info + scoring)
+          if (values.length >= 19) {
+            // Auto values (indices 7-12)
+            const autoValues = values.slice(7, 13).map(v => parseInt(v));
+            console.log("Auto values:", autoValues);
+            
+            if (!autoValues.some(isNaN)) {
+              setAutoL1Coral(autoValues[0]);
+              setAutoL2Coral(autoValues[1]);
+              setAutoL3Coral(autoValues[2]);
+              setAutoL4Coral(autoValues[3]);
+              setAutoAlgaeProcessor(autoValues[4]);
+              setAutoAlgaeNet(autoValues[5]);
+            }
+
+            // TeleOp values (indices 13-18)
+            const teleOpValues = values.slice(13, 19).map(v => parseInt(v));
+            console.log("TeleOp values:", teleOpValues);
+            
+            if (!teleOpValues.some(isNaN)) {
+              setTeleOpL1Coral(teleOpValues[0]);
+              setTeleOpL2Coral(teleOpValues[1]);
+              setTeleOpL3Coral(teleOpValues[2]);
+              setTeleOpL4Coral(teleOpValues[3]);
+              setTeleOpAlgaeProcessor(teleOpValues[4]);
+              setTeleOpAlgaeNet(teleOpValues[5]);
+            }
+
+            // Removed Algae (index 19)
+            if (values.length > 19) {
+              setRemovedAlgae(values[19] === '1');
+            }
+
+            // Comments (indices 20-21)
+            if (values.length > 20) {
+              setCommentValue(values[20] || '');
+            }
+            if (values.length > 21) {
+              setQuestionValue(values[21] || '');
+            }
+
+            console.log("Successfully loaded all match data");
           } else {
-            setCommentValue('');
+            console.log("Not enough values in CSV. Expected >= 19, got:", values.length);
           }
-          
-          setIsInitialized(true);
         } catch (error) {
-          console.error('Error loading existing comment:', error);
-          setCommentValue('');
+          console.error('Error loading match data:', error);
+          console.error('Error details:', error.message);
         }
       }
     };
 
-    loadExistingComment();
-  }, [route.params?.matchNum, isInitialized]);
+    loadExistingMatchData();
+  }, [route.params?.matchNum]);
 
   useEffect(() => {
     const loadDriverStation = async () => {
@@ -118,42 +161,65 @@ const MatchScreen = props => {
           <TouchableOpacity
             style={styles.backButton}
             onPress={async () => {
-              // Save current comment state before going back
-              const match = route.params.matchNum;
-              const csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
-              let currData = await FileSystem.readAsStringAsync(csvURI);
-              
-              let commaIndex = 0;
-              let commas = 0;
-              
-              for (let i = 0; i < currData.length; i++) {
-                if (currData.charAt(i) == ',') commas++;
-                if (commas == 6) {
-                  commaIndex = i;
-                  break;
-                }
+              try {
+                // Save all match data before going back
+                const match = route.params.matchNum;
+                const csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
+                let currData = await FileSystem.readAsStringAsync(csvURI);
+                
+                // Split and get team info (first 7 fields)
+                const values = currData.split(',');
+                const teamInfo = values.slice(0, 7).join(',');
+                
+                // Build the new data string with proper formatting
+                const newData = [
+                  teamInfo,
+                  autoL1Coral,
+                  autoL2Coral,
+                  autoL3Coral,
+                  autoL4Coral,
+                  autoAlgaeProcessor,
+                  autoAlgaeNet,
+                  teleOpL1Coral,
+                  teleOpL2Coral,
+                  teleOpL3Coral,
+                  teleOpL4Coral,
+                  teleOpAlgaeProcessor,
+                  teleOpAlgaeNet,
+                  removedAlgae ? 1 : 0,
+                  `"${commentValue || ''}"`,
+                  `"${questionValue || ''}"`,
+                ].join(',');
+                
+                await FileSystem.writeAsStringAsync(csvURI, newData);
+                console.log("Saved data:", newData);
+                
+                navigation.goBack();
+              } catch (error) {
+                console.error("Error saving data:", error);
               }
-
-              currData = currData.slice(0, commaIndex + 1);
-              currData += `${commentValue === `` ? 0 : `"${commentValue}"`}`;
-              
-              await FileSystem.writeAsStringAsync(csvURI, currData);
-              
-              navigation.goBack();
             }}
           >
             <Text style={styles.backButtonText}>⬅</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Match</Text>
-          <TouchableOpacity
-            style={styles.commentButton}
-            onPress={() => setIsCommentModalVisible(true)}
-          >
-            <Image
-              source={require("../assets/images/comment-icon.png")}
-              style={styles.commentIcon}
-            />
-          </TouchableOpacity>
+          <Text style={styles.title}>Match {route.params.matchNum}</Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.questionButton}
+              onPress={() => setIsQuestionModalVisible(true)}
+            >
+              <MaterialIcons name="help" size={30} color="#FFD700" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.commentButton}
+              onPress={() => setIsCommentModalVisible(true)}
+            >
+              <Image
+                source={require("../assets/images/comment-icon.png")}
+                style={styles.commentIcon}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -353,48 +419,94 @@ const MatchScreen = props => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Question Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isQuestionModalVisible}
+        onRequestClose={() => setIsQuestionModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Questions/Clarifications</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  multiline
+                  value={questionValue}
+                  onChangeText={setQuestionValue}
+                  placeholder="Enter questions or clarifications..."
+                  placeholderTextColor="rgba(255, 215, 0, 0.5)"
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton, { flex: 1 }]}
+                    onPress={() => setIsQuestionModalVisible(false)}
+                  >
+                    <Text style={styles.modalButtonText}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 
   async function matchSubmit() {
-    let match = route.params.matchNum;
-    let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
-
-    let currData = await FileSystem.readAsStringAsync(csvURI);
-    console.log(currData)
-    
-    let commaIndex = 0;
-    let commas = 0;
-    
-    for (let i = 0; i < currData.length; i++) {
-      if (currData.charAt(i) == ',') commas++;
-
-      if (commas == 6) {
-        commaIndex = i;
-        console.log(commaIndex)
-        break;
-      }
+    try {
+      const match = route.params.matchNum;
+      const csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
+      let currData = await FileSystem.readAsStringAsync(csvURI);
+      
+      // Split and get team info (first 7 fields)
+      const values = currData.split(',');
+      const teamInfo = values.slice(0, 7).join(',');
+      
+      // Build the new data string with proper formatting
+      const newData = [
+        teamInfo,
+        autoL1Coral,
+        autoL2Coral,
+        autoL3Coral,
+        autoL4Coral,
+        autoAlgaeProcessor,
+        autoAlgaeNet,
+        teleOpL1Coral,
+        teleOpL2Coral,
+        teleOpL3Coral,
+        teleOpL4Coral,
+        teleOpAlgaeProcessor,
+        teleOpAlgaeNet,
+        removedAlgae ? 1 : 0,
+        `"${commentValue || ''}"`,
+        `"${questionValue || ''}"`,
+      ].join(',');
+      
+      await FileSystem.writeAsStringAsync(csvURI, newData);
+      console.log("Saved data on submit:", newData);
+      
+      await Clipboard.setStringAsync(newData);
+      
+      // Clear both comment types after submission
+      setCommentValue('');
+      setQuestionValue('');
+    } catch (error) {
+      console.error("Error submitting match:", error);
     }
-
-    // Keep the original comment if no new comment was added
-    const originalComment = currData.split(',')[6];
-    const finalComment = commentValue || originalComment || "";
-
-    currData = currData.slice(0, commaIndex + 1);
-    console.log(`currData: ${currData}`)
-
-    // Add the new data fields
-    currData += `${route.params.hpAtProcessor ? 1 : 0},`;  // Add HP at Processor value
-    currData += `${autoL1Coral},${autoL2Coral},${autoL3Coral},${autoL4Coral},${autoAlgaeProcessor},${autoAlgaeNet},`;
-    currData += `${teleOpL1Coral},${teleOpL2Coral},${teleOpL3Coral},${teleOpL4Coral},${teleOpAlgaeProcessor},${teleOpAlgaeNet},`;
-    currData += `${removedAlgae ? 1 : 0},`;  // Add the removedAlgae boolean as 1 or 0 without quotes
-    currData += finalComment ? `"${finalComment}"` : `""`;  // Always use quotes, empty string if no comment
-
-    await FileSystem.writeAsStringAsync(csvURI, currData);
-    console.log(await FileSystem.readAsStringAsync(csvURI));
-
-    await Clipboard.setStringAsync(currData);
   }
+
+  // Add useEffect to clear comments when match number changes
+  useEffect(() => {
+    if (route.params?.matchNum) {
+      setCommentValue('');
+      setQuestionValue('');
+      setIsInitialized(false);
+    }
+  }, [route.params?.matchNum]);
 
   async function getDataString() {
     let match = route.params.matchNum;
@@ -593,9 +705,9 @@ const styles = StyleSheet.create({
 
   backButton: {
     backgroundColor: '#000000',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: "#000",
@@ -609,11 +721,11 @@ const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontSize: 18,
+    fontSize: 27,
     color: '#FFD700',
     fontWeight: '900',
-    lineHeight: 32,
-    width: 32,
+    lineHeight: 48,
+    width: 48,
     textAlign: 'center',
     textAlignVertical: 'center',
   },
@@ -626,18 +738,33 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  questionButton: {
+    backgroundColor: '#000000',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   commentButton: {
     backgroundColor: '#000000',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   commentIcon: {
-    width: 20,
-    height: 20,
+    width: 30,
+    height: 30,
     tintColor: '#FFD700',
   },
 

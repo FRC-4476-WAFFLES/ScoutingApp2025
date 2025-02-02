@@ -246,6 +246,52 @@ const SettingsScreen = props => {
     }
   };
 
+  const clearAllMatchData = async () => {
+    try {
+      // Get all files in the document directory
+      const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory);
+      
+      // Filter for match CSV files
+      const matchFiles = files.filter(file => file.startsWith('match') && file.endsWith('.csv'));
+      
+      // Delete each match file
+      for (const file of matchFiles) {
+        await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${file}`);
+      }
+      
+      Alert.alert(
+        "Success",
+        `Cleared data for ${matchFiles.length} matches`,
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      console.error('Error clearing match data:', error);
+      Alert.alert(
+        "Error",
+        "Failed to clear match data",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
+  const confirmClearData = () => {
+    Alert.alert(
+      "Clear All Match Data",
+      "Are you sure you want to delete all saved match data? This cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Clear",
+          onPress: clearAllMatchData,
+          style: "destructive"
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Sticky Header */}
@@ -376,6 +422,17 @@ const SettingsScreen = props => {
           <Text style={styles.saveButtonText}>Save Settings</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Add this before the closing SafeAreaView */}
+      <View style={styles.dangerZone}>
+        <Text style={styles.dangerZoneTitle}>Danger Zone</Text>
+        <TouchableOpacity
+          style={styles.clearDataButton}
+          onPress={confirmClearData}
+        >
+          <Text style={styles.clearDataButtonText}>Clear All Match Data</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -428,9 +485,9 @@ const styles = StyleSheet.create({
 
   backButton: {
     backgroundColor: '#000000',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: "#000",
@@ -444,13 +501,13 @@ const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontSize: 20,
+    fontSize: 30,
     color: '#FFD700',
     fontWeight: '900',
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    marginTop: Platform.OS === 'ios' ? -2 : 0,
+    marginTop: Platform.OS === 'ios' ? -3 : 0,
   },
 
   section: {
@@ -683,6 +740,33 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'center',
     marginBottom: 10,
+  },
+
+  dangerZone: {
+    marginTop: 20,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ff0000',
+  },
+  
+  dangerZoneTitle: {
+    color: '#ff0000',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  
+  clearDataButton: {
+    backgroundColor: '#ff0000',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  
+  clearDataButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

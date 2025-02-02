@@ -60,7 +60,8 @@ const QRCodeScreen = props => {
       { header: 'TeleOp Algae Processor', index: 17 },
       { header: 'TeleOp Algae Net', index: 18 },
       { header: 'Removed Algae', index: 19, isBoolean: true },
-      { header: 'Match Comment', index: 20 }
+      { header: 'Match Comments', index: 20 },
+      { header: 'Questions/Clarifications', index: 21 }
     ];
 
     return (
@@ -248,9 +249,9 @@ const styles = StyleSheet.create({
 
   backButton: {
     backgroundColor: '#000000',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: "#000",
@@ -264,13 +265,13 @@ const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontSize: 20,
+    fontSize: 30,
     color: '#FFD700',
     fontWeight: '900',
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    marginTop: Platform.OS === 'ios' ? -2 : 0,
+    marginTop: Platform.OS === 'ios' ? -3 : 0,
   },
 
   title: {

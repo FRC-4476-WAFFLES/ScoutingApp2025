@@ -596,9 +596,9 @@ const styles = StyleSheet.create({
 
   backButton: {
     backgroundColor: '#000000',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: "#000",
@@ -612,14 +612,15 @@ const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontSize: 22,
+    fontSize: 27,
     color: '#FFD700',
     fontWeight: '900',
-    height: 32,
-    lineHeight: 32,
+    lineHeight: 48,
+    width: 48,
+    textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    paddingBottom: Platform.OS === 'ios' ? 4 : 2,
+    marginTop: Platform.OS === 'ios' ? -3 : 0,
   },
 
   section: {
@@ -822,16 +823,16 @@ const styles = StyleSheet.create({
 
   commentButton: {
     backgroundColor: '#000000',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   commentIcon: {
-    width: 20,
-    height: 20,
+    width: 30,
+    height: 30,
     tintColor: '#FFD700',
   },
 
