@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { captureScreen } from "react-native-view-shot";
 const QRCodeScreen = props => {
   const { navigation, route } = props;
   const csvData = route.params.data;
+  const [isDataExpanded, setIsDataExpanded] = useState(false);
 
   const ref = React.useRef(null);
 
@@ -31,6 +32,54 @@ const QRCodeScreen = props => {
     getPermissions();
   }, []);
 
+  function getFormattedDataTable(csvData) {
+    if (!csvData) return null;
+    const values = CSVtoArray(csvData);
+    if (!values) return null;
+
+    // Headers in exact order matching the CSV data structure
+    const dataMapping = [
+      { header: 'Team Number', index: 0 },
+      { header: 'Match Number', index: 1 },
+      { header: 'TMA Key', index: 2 },
+      { header: 'Driver Station', index: 3 },
+      { header: 'Alliance', index: 4 },
+      { header: 'Scout Name', index: 5 },
+      { header: 'Pre-Match Comment', index: 6 },
+      { header: 'HP at Processor', index: 7, isBoolean: true },
+      { header: 'Auto L1 Coral', index: 8 },
+      { header: 'Auto L2 Coral', index: 9 },
+      { header: 'Auto L3 Coral', index: 10 },
+      { header: 'Auto L4 Coral', index: 11 },
+      { header: 'Auto Algae Processor', index: 12 },
+      { header: 'Auto Algae Net', index: 13 },
+      { header: 'TeleOp L1 Coral', index: 14 },
+      { header: 'TeleOp L2 Coral', index: 15 },
+      { header: 'TeleOp L3 Coral', index: 16 },
+      { header: 'TeleOp L4 Coral', index: 17 },
+      { header: 'TeleOp Algae Processor', index: 18 },
+      { header: 'TeleOp Algae Net', index: 19 },
+      { header: 'Removed Algae', index: 20, isBoolean: true },
+      { header: 'Match Comment', index: 21 }
+    ];
+
+    return (
+      <View style={styles.tableContainer}>
+        <Text style={styles.tableTitle}>Match Data Details</Text>
+        {dataMapping.map(({ header, index, isBoolean }) => (
+          <View key={index} style={styles.tableRow}>
+            <Text style={styles.tableHeader}>{header}:</Text>
+            <Text style={styles.tableValue}>
+              {isBoolean ? 
+                (values[index] === '1' ? 'Yes' : 'No') :
+                values[index]?.replace(/^"|"$/g, '') || '-'}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -40,7 +89,7 @@ const QRCodeScreen = props => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Text style={styles.backButtonText}>⬅</Text>
           </TouchableOpacity>
           <Text style={styles.title}>QR Code</Text>
           <View style={{width: 32}} />
@@ -62,13 +111,23 @@ const QRCodeScreen = props => {
         </View>
 
         <View style={styles.dataContainer}>
-          <Text style={styles.dataLabel}>Match Data:</Text>
-          <Text style={styles.dataText}>
-            {getDataFormatted(route.params.data)}
-          </Text>
+          <Text style={styles.dataLabel}>Raw Data:</Text>
           <Text style={styles.csvText} numberOfLines={3} ellipsizeMode="tail">
             {csvData || ''}
           </Text>
+        </View>
+
+        <View style={styles.dataContainer}>
+          <TouchableOpacity 
+            style={styles.dataHeader}
+            onPress={() => setIsDataExpanded(!isDataExpanded)}
+          >
+            <Text style={styles.dataLabel}>Match Data Details</Text>
+            <Text style={styles.expandButton}>
+              {isDataExpanded ? '−' : '+'}
+            </Text>
+          </TouchableOpacity>
+          {isDataExpanded && getFormattedDataTable(csvData)}
         </View>
 
         <TouchableOpacity 
@@ -146,8 +205,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: '#000000',
     height: Platform.OS === "android" ? 
-      StatusBar.currentHeight + 50 : 
-      60,
+      StatusBar.currentHeight + 70 : 
+      80,
   },
 
   header: {
@@ -158,7 +217,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 15,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 10 : 25,
   },
 
   backButton: {
@@ -168,13 +227,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   backButtonText: {
     fontSize: 20,
     color: '#FFD700',
-    fontWeight: 'bold',
-    marginTop: -2,
+    fontWeight: '900',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    marginTop: Platform.OS === 'ios' ? -2 : 0,
   },
 
   title: {
@@ -275,6 +345,56 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  tableContainer: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 20,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+
+  tableTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  tableHeader: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  tableValue: {
+    flex: 1,
+    fontSize: 16,
+  },
+
+  dataHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+
+  expandButton: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

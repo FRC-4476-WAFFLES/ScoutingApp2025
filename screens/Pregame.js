@@ -185,7 +185,7 @@ const PregameScreen = props => {
                 style={styles.backButton}
                 onPress={() => navigation.goBack()}
               >
-                <Text style={styles.backButtonText}>←</Text>
+                <Text style={styles.backButtonText}>⬅</Text>
               </TouchableOpacity>
               <Text style={[styles.title, { marginHorizontal: 32 }]}>Pre-Game</Text>
               <TouchableOpacity
@@ -547,8 +547,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: '#000000',
     height: Platform.OS === "android" ? 
-      StatusBar.currentHeight + 50 : 
-      60,
+      StatusBar.currentHeight + 70 : 
+      80,
   },
 
   header: {
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 15,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 10 : 25,
   },
 
   scrollView: {
@@ -599,10 +599,14 @@ const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontSize: 20,
+    fontSize: 22,
     color: '#FFD700',
-    fontWeight: 'bold',
-    marginTop: -2,
+    fontWeight: '900',
+    height: 32,
+    lineHeight: 32,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    paddingBottom: Platform.OS === 'ios' ? 4 : 2,
   },
 
   section: {

@@ -380,8 +380,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: '#000000',
     height: Platform.OS === "android" ? 
-      StatusBar.currentHeight + 50 : 
-      60,
+      StatusBar.currentHeight + 70 : 
+      80,
   },
 
   header: {
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 15,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 10 : 25,
   },
 
   scrollView: {
@@ -435,8 +435,11 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 20,
     color: '#FFD700',
-    fontWeight: 'bold',
-    marginTop: -2,
+    fontWeight: '900',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    marginTop: Platform.OS === 'ios' ? -2 : 0,
   },
 
   section: {

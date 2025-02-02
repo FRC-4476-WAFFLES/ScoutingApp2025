@@ -52,7 +52,7 @@ const MatchScreen = props => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const [isAutoExpanded, setIsAutoExpanded] = useState(true);
-  const [isTeleOpExpanded, setIsTeleOpExpanded] = useState(false);
+  const [isTeleOpExpanded, setIsTeleOpExpanded] = useState(true);
 
   const [driverStation, setDriverStation] = useState(null);
 
@@ -69,8 +69,8 @@ const MatchScreen = props => {
           const values = data.split(',');
           const existingComment = values[values.length - 1];
           
-          // If comment exists and isn't "0", set it (remove quotes if present)
-          if (existingComment && existingComment !== "0") {
+          // If comment exists and isn't empty, set it (remove quotes if present)
+          if (existingComment && existingComment !== "") {
             setCommentValue(existingComment.replace(/^"|"$/g, ''));
           }
           
@@ -132,7 +132,7 @@ const MatchScreen = props => {
               navigation.goBack();
             }}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Text style={styles.backButtonText}>⬅</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Match</Text>
           <TouchableOpacity
@@ -368,7 +368,7 @@ const MatchScreen = props => {
 
     // Keep the original comment if no new comment was added
     const originalComment = currData.split(',')[6];
-    const finalComment = commentValue || (originalComment !== "0" ? originalComment : "0");
+    const finalComment = commentValue || originalComment || "";
 
     currData = currData.slice(0, commaIndex + 1);
     console.log(`currData: ${currData}`)
@@ -378,7 +378,7 @@ const MatchScreen = props => {
     currData += `${autoL1Coral},${autoL2Coral},${autoL3Coral},${autoL4Coral},${autoAlgaeProcessor},${autoAlgaeNet},`;
     currData += `${teleOpL1Coral},${teleOpL2Coral},${teleOpL3Coral},${teleOpL4Coral},${teleOpAlgaeProcessor},${teleOpAlgaeNet},`;
     currData += `${removedAlgae ? 1 : 0},`;  // Add the removedAlgae boolean as 1 or 0
-    currData += `${finalComment === `` ? 0 : `"${finalComment}"`}`;
+    currData += finalComment ? `"${finalComment}"` : "";
 
     await FileSystem.writeAsStringAsync(csvURI, currData);
     console.log(await FileSystem.readAsStringAsync(csvURI));
@@ -566,8 +566,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: '#000000',
     height: Platform.OS === "android" ? 
-      StatusBar.currentHeight + 50 : 
-      60,
+      StatusBar.currentHeight + 70 : 
+      80,
   },
 
   header: {
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 15,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 10 : 25,
   },
 
   backButton: {
@@ -588,13 +588,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   backButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#FFD700',
-    fontWeight: 'bold',
-    marginTop: -2,
+    fontWeight: '900',
+    lineHeight: 32,
+    width: 32,
+    textAlign: 'center',
+    textAlignVertical: 'center',
   },
 
   title: {
