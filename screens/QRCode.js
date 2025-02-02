@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import QRCode from "react-qr-code";
 import * as MediaLibrary from 'expo-media-library';
-import { captureScreen } from "react-native-view-shot";
+import ViewShot from "react-native-view-shot";
+import { captureRef } from 'react-native-view-shot';
 
 const QRCodeScreen = props => {
   const { navigation, route } = props;
@@ -45,39 +46,54 @@ const QRCodeScreen = props => {
       { header: 'Driver Station', index: 3 },
       { header: 'Alliance', index: 4 },
       { header: 'Scout Name', index: 5 },
-      { header: 'Pre-Match Comment', index: 6 },
-      { header: 'HP at Processor', index: 7, isBoolean: true },
-      { header: 'Auto L1 Coral', index: 8 },
-      { header: 'Auto L2 Coral', index: 9 },
-      { header: 'Auto L3 Coral', index: 10 },
-      { header: 'Auto L4 Coral', index: 11 },
-      { header: 'Auto Algae Processor', index: 12 },
-      { header: 'Auto Algae Net', index: 13 },
-      { header: 'TeleOp L1 Coral', index: 14 },
-      { header: 'TeleOp L2 Coral', index: 15 },
-      { header: 'TeleOp L3 Coral', index: 16 },
-      { header: 'TeleOp L4 Coral', index: 17 },
-      { header: 'TeleOp Algae Processor', index: 18 },
-      { header: 'TeleOp Algae Net', index: 19 },
-      { header: 'Removed Algae', index: 20, isBoolean: true },
-      { header: 'Match Comment', index: 21 }
+      { header: 'HP at Processor', index: 6, isBoolean: true },
+      { header: 'Auto L1 Coral', index: 7 },
+      { header: 'Auto L2 Coral', index: 8 },
+      { header: 'Auto L3 Coral', index: 9 },
+      { header: 'Auto L4 Coral', index: 10 },
+      { header: 'Auto Algae Processor', index: 11 },
+      { header: 'Auto Algae Net', index: 12 },
+      { header: 'TeleOp L1 Coral', index: 13 },
+      { header: 'TeleOp L2 Coral', index: 14 },
+      { header: 'TeleOp L3 Coral', index: 15 },
+      { header: 'TeleOp L4 Coral', index: 16 },
+      { header: 'TeleOp Algae Processor', index: 17 },
+      { header: 'TeleOp Algae Net', index: 18 },
+      { header: 'Removed Algae', index: 19, isBoolean: true },
+      { header: 'Match Comment', index: 20 }
     ];
 
     return (
       <View style={styles.tableContainer}>
         <Text style={styles.tableTitle}>Match Data Details</Text>
         {dataMapping.map(({ header, index, isBoolean }) => (
-          <View key={index} style={styles.tableRow}>
+          <View key={`${header}-${index}`} style={styles.tableRow}>
             <Text style={styles.tableHeader}>{header}:</Text>
             <Text style={styles.tableValue}>
               {isBoolean ? 
-                (values[index] === '1' ? 'Yes' : 'No') :
+                (() => {
+                  console.log(`Checking boolean value for ${header}:`, values[index]);
+                  return values[index] === '1' ? 'Yes' : 'No';
+                })() :
                 values[index]?.replace(/^"|"$/g, '') || '-'}
             </Text>
           </View>
         ))}
       </View>
     );
+  }
+
+  function getQRInfo(csvData) {
+    if (!csvData) return null;
+    const values = CSVtoArray(csvData);
+    if (!values) return null;
+    
+    return {
+      teamNumber: values[0],
+      matchNumber: values[1],
+      scoutName: values[5],
+      driverStation: values[3]
+    };
   }
 
   return (
@@ -101,10 +117,20 @@ const QRCodeScreen = props => {
         contentContainerStyle={styles.scrollViewContent}
       >
         <View ref={ref} style={styles.qrcodeContainer}>
+          <View style={styles.qrInfoSection}>
+            {csvData && getQRInfo(csvData) && (
+              <>
+                <Text style={styles.matchNumberText}>Match {getQRInfo(csvData).matchNumber}</Text>
+                <Text style={styles.qrInfoText}>Team: {getQRInfo(csvData).teamNumber}</Text>
+                <Text style={styles.qrInfoText}>Scout: {getQRInfo(csvData).scoutName}</Text>
+                <Text style={styles.qrInfoText}>Station: {getQRInfo(csvData).driverStation}</Text>
+              </>
+            )}
+          </View>
           <View style={styles.qrCodeWrapper}>
             <QRCode 
               value={csvData || ' '}
-              size={300}
+              size={400}
               style={styles.qrCode}
             />
           </View>
@@ -132,7 +158,7 @@ const QRCodeScreen = props => {
 
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => captureQR()}
+          onPress={async () => await captureQR()}
         >
           <Text style={styles.buttonText}>Save QR Code</Text>
         </TouchableOpacity>
@@ -147,18 +173,12 @@ const QRCodeScreen = props => {
     </SafeAreaView>
   );
 
-  function nextMatch() {
-    navigation.navigate("Pregame", {
-      matchNum: route.params.matchNum + 1,
-    });
-  }
-
   async function captureQR() {
     try {
-      const result = await captureScreen({
-        result: "tmpfile",
-        quality: 1,
+      const result = await captureRef(ref, {
         format: "png",
+        quality: 1,
+        result: "tmpfile",
       });
       await MediaLibrary.saveToLibraryAsync(result);
       alert('QR Code saved to photo gallery!');
@@ -166,6 +186,12 @@ const QRCodeScreen = props => {
       console.log(e);
       alert('Failed to save QR Code. Please try again.');
     }
+  }
+
+  function nextMatch() {
+    navigation.navigate("Pregame", {
+      matchNum: route.params.matchNum + 1,
+    });
   }
 
   function getDataFormatted(data) {
@@ -267,7 +293,7 @@ const styles = StyleSheet.create({
 
   qrcodeContainer: {
     backgroundColor: '#ffffff',
-    padding: 20,
+    padding: 25,
     borderRadius: 20,
     marginVertical: 20,
     shadowColor: "#000000",
@@ -278,10 +304,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 5,
+    width: '100%',
+    alignItems: 'center',
+  },
+
+  qrCodeWrapper: {
+    backgroundColor: '#ffffff',
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
 
   qrCode: {
-    padding: 10,
+    padding: 15,
   },
 
   dataContainer: {
@@ -340,13 +376,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  qrCodeWrapper: {
-    backgroundColor: '#ffffff',
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   tableContainer: {
     backgroundColor: '#ffffff',
     padding: 20,
@@ -363,26 +392,32 @@ const styles = StyleSheet.create({
   },
 
   tableTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
+    textAlign: 'center',
   },
 
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
 
   tableHeader: {
-    flex: 1,
+    flex: 1.2,
     fontSize: 16,
     fontWeight: 'bold',
+    paddingRight: 10,
   },
 
   tableValue: {
-    flex: 1,
+    flex: 0.8,
     fontSize: 16,
+    textAlign: 'right',
   },
 
   dataHeader: {
@@ -395,6 +430,30 @@ const styles = StyleSheet.create({
   expandButton: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+
+  qrInfoSection: {
+    backgroundColor: '#ffffff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    alignItems: 'center',
+    width: '100%',
+  },
+
+  matchNumberText: {
+    fontSize: 54,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: '#000000',
+  },
+
+  qrInfoText: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 5,
+    textAlign: 'center',
   },
 });
 

@@ -78,6 +78,7 @@ const PregameScreen = props => {
   React.useEffect(() => {
     if (route.params?.matchNum) {
         setMatchNum(route.params.matchNum);
+        setCommentValue('');
         findMatch();
     }
   }, [route.params])
@@ -110,14 +111,19 @@ const PregameScreen = props => {
             const values = data.split(',');
             const existingComment = values[values.length - 1];
             
-            if (existingComment && existingComment !== "0") {
+            if (existingComment && existingComment !== `""`) {
               setCommentValue(existingComment.replace(/^"|"$/g, ''));
+            } else {
+              setCommentValue('');
             }
+          } else {
+            setCommentValue('');
           }
           
           setIsInitialized(true);
         } catch (error) {
           console.error('Error loading existing comment:', error);
+          setCommentValue('');
         }
       }
     };
@@ -149,6 +155,12 @@ const PregameScreen = props => {
 
     loadMatchRange();
   }, []);
+
+  // Add new useEffect to clear comments when match number changes
+  React.useEffect(() => {
+    setCommentValue('');
+    setIsInitialized(false);
+  }, [matchNum]);
 
   const openNameModal = () => {
     setTempScoutName(scoutName || '');
@@ -216,8 +228,10 @@ const PregameScreen = props => {
                     const num = parseInt(text);
                     if (!text) {
                       setMatchNum(undefined);
+                      setCommentValue('');
                     } else if (num >= minMatchNum && num <= maxMatchNum) {
                       setMatchNum(num);
+                      setCommentValue('');
                     }
                   }}
                   value={matchNum ? String(matchNum) : undefined}
@@ -520,14 +534,13 @@ const PregameScreen = props => {
       let alliance = await settingsJSON["Settings"]["driverStation"].charAt(0);
       let allianceKey = `${await alliance}${match}`;
       let scout = await settingsJSON["Settings"]["scoutName"];
-      //let startPos = await startingPositions[selectedPosition];
       let startPos = "N/A";
   
       let tmaKey = `${team}-${allianceKey}`;
   
       let csvText = `${team},${match},${tmaKey},${position},${alliance},${scout},${
         hpAtProcessor ? 1 : 0},${
-        commentValue === `` ? 0 : `"${commentValue}"`
+        commentValue === `` ? `""` : `"${commentValue}"`
       }`;
   
       let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;

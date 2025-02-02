@@ -65,18 +65,28 @@ const MatchScreen = props => {
           const csvURI = `${FileSystem.documentDirectory}match${route.params.matchNum}.csv`;
           const data = await FileSystem.readAsStringAsync(csvURI);
           
-          // Split the CSV and get the last value which should be the comment
+          // Split the CSV and get all values
           const values = data.split(',');
+          
+          // Load removed algae value if it exists (index 20)
+          if (values.length > 20) {
+            setRemovedAlgae(values[20] === '1');
+          }
+          
+          // Get the last value which should be the comment
           const existingComment = values[values.length - 1];
           
           // If comment exists and isn't empty, set it (remove quotes if present)
-          if (existingComment && existingComment !== "") {
+          if (existingComment && existingComment !== `""`) {
             setCommentValue(existingComment.replace(/^"|"$/g, ''));
+          } else {
+            setCommentValue('');
           }
           
           setIsInitialized(true);
         } catch (error) {
           console.error('Error loading existing comment:', error);
+          setCommentValue('');
         }
       }
     };
@@ -377,8 +387,8 @@ const MatchScreen = props => {
     currData += `${route.params.hpAtProcessor ? 1 : 0},`;  // Add HP at Processor value
     currData += `${autoL1Coral},${autoL2Coral},${autoL3Coral},${autoL4Coral},${autoAlgaeProcessor},${autoAlgaeNet},`;
     currData += `${teleOpL1Coral},${teleOpL2Coral},${teleOpL3Coral},${teleOpL4Coral},${teleOpAlgaeProcessor},${teleOpAlgaeNet},`;
-    currData += `${removedAlgae ? 1 : 0},`;  // Add the removedAlgae boolean as 1 or 0
-    currData += finalComment ? `"${finalComment}"` : "";
+    currData += `${removedAlgae ? 1 : 0},`;  // Add the removedAlgae boolean as 1 or 0 without quotes
+    currData += finalComment ? `"${finalComment}"` : `""`;  // Always use quotes, empty string if no comment
 
     await FileSystem.writeAsStringAsync(csvURI, currData);
     console.log(await FileSystem.readAsStringAsync(csvURI));
