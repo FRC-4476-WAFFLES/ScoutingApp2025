@@ -169,6 +169,13 @@ const SettingsScreen = props => {
 
   async function getMatchSchedule() {
     try {
+      if (!codeText || codeText.length < 8) {
+        throw new Error('Invalid event code format. Expected format: YYYYevent (e.g., 2024onwat)');
+      }
+
+      const year = codeText.substring(0, 4);
+      const eventCode = codeText.substring(4);
+
       var base64 = require("base-64");
       var username = "faiazumaer";
       var password = "5fecfbc3-09ce-45a0-bad2-769fd4006781";
@@ -183,7 +190,7 @@ const SettingsScreen = props => {
       };
 
       const response = await fetch(
-        `https://frc-api.firstinspires.org/v3.0/2024/schedule/${codeText}?tournamentLevel=qual`,
+        `https://frc-api.firstinspires.org/v3.0/${year}/schedule/${eventCode}?tournamentLevel=qual`,
         requestOptions
       );
 
@@ -276,7 +283,7 @@ const SettingsScreen = props => {
               style={styles.input}
               onChangeText={setCodeText}
               value={codeText}
-              placeholder="Enter Event Code"
+              placeholder="Enter Event Code (e.g., 2024onwat)"
               placeholderTextColor="rgba(255, 215, 0, 0.5)"
             />
             {showScheduleCheckmark && (
@@ -286,6 +293,10 @@ const SettingsScreen = props => {
               />
             )}
           </View>
+          
+          <Text style={styles.helperText}>
+            Format: YYYYeventcode (e.g., 2024onwat)
+          </Text>
           
           <TouchableOpacity
             style={styles.importButton}
@@ -665,6 +676,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000000',
+  },
+
+  helperText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
 
