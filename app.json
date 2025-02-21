@@ -37,7 +37,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "20744738-5380-410a-9cb5-d31e0476030f"
+        "projectId": "d412a8c5-f217-4fb7-9884-f23da5bd0d81"
       }
     },
     "plugins": [
@@ -47,8 +47,7 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
       ],
-      "expo-font",
-      "expo-barcode-scanner"
+      "expo-font"
     ],
     "newArchEnabled": true,
     "fonts": [

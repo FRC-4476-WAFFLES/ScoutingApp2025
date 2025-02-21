@@ -15,6 +15,10 @@ import * as MediaLibrary from 'expo-media-library';
 import ViewShot from "react-native-view-shot";
 import { captureRef } from 'react-native-view-shot';
 
+const CSV_HEADERS = "Team Number,Match Number,TMA Key,Driver Station,Alliance,Scout Name,HP at Processor,Auto L1 Coral,Auto L2 Coral,Auto L3 Coral,Auto L4 Coral,Auto Algae Processor,Auto Algae Net,TeleOp L1 Coral,TeleOp L2 Coral,TeleOp L3 Coral,TeleOp L4 Coral,TeleOp Algae Processor,TeleOp Algae Net,Removed Algae,Match Comments,Questions/Clarifications";
+
+export const getCSVHeaders = () => CSV_HEADERS;
+
 const QRCodeScreen = props => {
   const { navigation, route } = props;
   const csvData = route.params.data;
