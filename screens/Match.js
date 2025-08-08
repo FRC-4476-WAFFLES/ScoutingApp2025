@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -44,16 +44,11 @@ const MatchScreen = props => {
   const [teleOpAlgaeProcessor, setTeleOpAlgaeProcessor] = useState(0);
   const [teleOpAlgaeNet, setTeleOpAlgaeNet] = useState(0);
 
-  const [trapNotes, setTrapNotes] = useState(0);
-  const [stashNotes, setStashNotes] = useState(0);
-
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
   const [commentValue, setCommentValue] = useState('');
 
   const [isQuestionModalVisible, setIsQuestionModalVisible] = useState(false);
   const [questionValue, setQuestionValue] = useState('');
-
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const [isAutoExpanded, setIsAutoExpanded] = useState(true);
   const [isTeleOpExpanded, setIsTeleOpExpanded] = useState(true);
@@ -115,13 +110,15 @@ const MatchScreen = props => {
               setRemovedAlgae(values[19] === '1');
             }
 
-            // Comments (indices 20-21)
+            // Comments & Questions (indices 20-21)
             if (values.length > 20) {
               setCommentValue(values[20] || '');
             }
             if (values.length > 21) {
               setQuestionValue(values[21] || '');
             }
+            console.log("Comment value:", commentValue);
+            console.log("Question value:", questionValue);
 
             console.log("Successfully loaded all match data");
           } else {
@@ -262,41 +259,41 @@ const MatchScreen = props => {
             {isAutoExpanded && (
               <View style={styles.sectionContent}>
                 <CounterItem
-                  label="L4 Coral"
+                  label="L4 Coral (High)"
                   value={autoL4Coral}
-                  onIncrement={() => updateAutoL4Coral(1)}
-                  onDecrement={() => updateAutoL4Coral(-1)}
+                  onIncrement={() => updateStat(1, autoL4Coral, setAutoL4Coral)}
+                  onDecrement={() => updateStat(-1, autoL4Coral, setAutoL4Coral)}
                 />
                 <CounterItem
-                  label="L3 Coral"
+                  label="L3 Coral (Middle)"
                   value={autoL3Coral}
-                  onIncrement={() => updateAutoL3Coral(1)}
-                  onDecrement={() => updateAutoL3Coral(-1)}
+                  onIncrement={() => updateStat(1, autoL3Coral, setAutoL3Coral)}
+                  onDecrement={() => updateStat(-1, autoL3Coral, setAutoL3Coral)}
                 />
                 <CounterItem
-                  label="L2 Coral"
+                  label="L2 Coral (Low)"
                   value={autoL2Coral}
-                  onIncrement={() => updateAutoL2Coral(1)}
-                  onDecrement={() => updateAutoL2Coral(-1)}
+                  onIncrement={() => updateStat(1, autoL2Coral, setAutoL2Coral)}
+                  onDecrement={() => updateStat(-1, autoL2Coral, setAutoL2Coral)}
                 />
                 <CounterItem
-                  label="L1 Coral"
+                  label="L1 Coral (Trough)"
                   value={autoL1Coral}
-                  onIncrement={() => updateAutoL1Coral(1)}
-                  onDecrement={() => updateAutoL1Coral(-1)}
+                  onIncrement={() => updateStat(1, autoL1Coral, setAutoL1Coral)}
+                  onDecrement={() => updateStat(-1, autoL1Coral, setAutoL1Coral)}
                   showDivider={true}
                 />
                 <CounterItem
                   label="Algae Net"
                   value={autoAlgaeNet}
-                  onIncrement={() => updateAutoAlgaeNet(1)}
-                  onDecrement={() => updateAutoAlgaeNet(-1)}
+                  onIncrement={() => updateStat(1, autoAlgaeNet, setAutoAlgaeNet)}
+                  onDecrement={() => updateStat(-1, autoAlgaeNet, setAutoAlgaeNet)}
                 />
                 <CounterItem
                   label="Algae Processor"
                   value={autoAlgaeProcessor}
-                  onIncrement={() => updateAutoAlgaeProcessor(1)}
-                  onDecrement={() => updateAutoAlgaeProcessor(-1)}
+                  onIncrement={() => updateStat(1, autoAlgaeProcessor, setAutoAlgaeProcessor)}
+                  onDecrement={() => updateStat(-1, autoAlgaeProcessor, setAutoAlgaeProcessor)}
                 />
               </View>
             )}
@@ -317,41 +314,41 @@ const MatchScreen = props => {
             {isTeleOpExpanded && (
               <View style={styles.sectionContent}>
                 <CounterItem
-                  label="L4 Coral"
+                  label="L4 Coral (High)"
                   value={teleOpL4Coral}
-                  onIncrement={() => updateTeleOpL4Coral(1)}
-                  onDecrement={() => updateTeleOpL4Coral(-1)}
+                  onIncrement={() => updateStat(1, teleOpL4Coral, setTeleOpL4Coral)}
+                  onDecrement={() => updateStat(-1, teleOpL4Coral, setTeleOpL4Coral)}
                 />
                 <CounterItem
-                  label="L3 Coral"
+                  label="L3 Coral (Middle)"
                   value={teleOpL3Coral}
-                  onIncrement={() => updateTeleOpL3Coral(1)}
-                  onDecrement={() => updateTeleOpL3Coral(-1)}
+                  onIncrement={() => updateStat(1, teleOpL3Coral, setTeleOpL3Coral)}
+                  onDecrement={() => updateStat(-1, teleOpL3Coral, setTeleOpL3Coral)}
                 />
                 <CounterItem
-                  label="L2 Coral"
+                  label="L2 Coral (Low)"
                   value={teleOpL2Coral}
-                  onIncrement={() => updateTeleOpL2Coral(1)}
-                  onDecrement={() => updateTeleOpL2Coral(-1)}
+                  onIncrement={() => updateStat(1, teleOpL2Coral, setTeleOpL2Coral)}
+                  onDecrement={() => updateStat(-1, teleOpL2Coral, setTeleOpL2Coral)}
                 />
                 <CounterItem
-                  label="L1 Coral"
+                  label="L1 Coral (Trough)"
                   value={teleOpL1Coral}
-                  onIncrement={() => updateTeleOpL1Coral(1)}
-                  onDecrement={() => updateTeleOpL1Coral(-1)}
+                  onIncrement={() => updateStat(1, teleOpL1Coral, setTeleOpL1Coral)}
+                  onDecrement={() => updateStat(-1, teleOpL1Coral, setTeleOpL1Coral)}
                   showDivider={true}
                 />
                 <CounterItem
                   label="Algae Net"
                   value={teleOpAlgaeNet}
-                  onIncrement={() => updateTeleOpAlgaeNet(1)}
-                  onDecrement={() => updateTeleOpAlgaeNet(-1)}
+                  onIncrement={() => updateStat(1, teleOpAlgaeNet, setTeleOpAlgaeNet)}
+                  onDecrement={() => updateStat(-1, teleOpAlgaeNet, setTeleOpAlgaeNet)}
                 />
                 <CounterItem
                   label="Algae Processor"
                   value={teleOpAlgaeProcessor}
-                  onIncrement={() => updateTeleOpAlgaeProcessor(1)}
-                  onDecrement={() => updateTeleOpAlgaeProcessor(-1)}
+                  onIncrement={() => updateStat(1, teleOpAlgaeProcessor, setTeleOpAlgaeProcessor)}
+                  onDecrement={() => updateStat(-1, teleOpAlgaeProcessor, setTeleOpAlgaeProcessor)}
                 />
                 <TouchableOpacity 
                   style={styles.checkboxContainer}
@@ -403,7 +400,7 @@ const MatchScreen = props => {
                   multiline
                   value={commentValue}
                   onChangeText={setCommentValue}
-                  placeholder="Enter match comments..."
+                  placeholder={"Enter match comments..."}
                   placeholderTextColor="rgba(255, 215, 0, 0.5)"
                 />
                 <View style={styles.modalButtons}>
@@ -431,7 +428,7 @@ const MatchScreen = props => {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Questions/Clarifications</Text>
+                <Text style={styles.modalTitle}>Questions/Clarifications {questionValue}</Text>
                 <TextInput
                   style={styles.modalInput}
                   multiline
@@ -490,23 +487,10 @@ const MatchScreen = props => {
       console.log("Saved data on submit:", newData);
       
       await Clipboard.setStringAsync(newData);
-      
-      // Clear both comment types after submission
-      setCommentValue('');
-      setQuestionValue('');
     } catch (error) {
       console.error("Error submitting match:", error);
     }
   }
-
-  // Add useEffect to clear comments when match number changes
-  useEffect(() => {
-    if (route.params?.matchNum) {
-      setCommentValue('');
-      setQuestionValue('');
-      setIsInitialized(false);
-    }
-  }, [route.params?.matchNum]);
 
   async function getDataString() {
     let match = route.params.matchNum;
@@ -517,134 +501,11 @@ const MatchScreen = props => {
 
     return dataString;
   }
-  
-  function handleCommentClick() {
-    setIsCommentBoxOpen(!isCommentBoxOpen);
-  }
-  
-  function updateAutoSpeaker(num) {
-    let target = autoSpeaker + num;
-    if (target >= 0) {
-      setAutoSpeaker(target);
-    }
-  }
-  
-  function updateAutoAmp(num) {
-    let target = autoAmp + num;
-    if (target >= 0) {
-      setAutoAmp(target);
-    }
-  }
-  
-  function updateTeleOpSpeaker(num) {
-    let target = teleOpSpeaker + num;
-    if (target >= 0) {
-      setTeleOpSpeaker(target);
-    }
-  }
-  
-  function updateTeleOpAmp(num) {
-    let target = teleOpAmp + num;
-    if (target >= 0) {
-      setTeleOpAmp(target);
-    }
-  }
 
-  function updateStashNotes(num) {
-    let target = stashNotes + num;
+  function updateStat(num, stat, setStat) {
+    let target = stat + num;
     if (target >= 0) {
-      setStashNotes(target);
-    }
-  }
-
-  function updateTrapNotes(num) {
-    let target = trapNotes + num;
-    if (target >= 0 && target <= 3) {
-      setTrapNotes(target);
-    }
-  }
-
-  function updateAutoL1Coral(num) {
-    let target = autoL1Coral + num;
-    if (target >= 0) {
-      setAutoL1Coral(target);
-    }
-  }
-
-  function updateAutoL2Coral(num) {
-    let target = autoL2Coral + num;
-    if (target >= 0) {
-      setAutoL2Coral(target);
-    }
-  }
-
-  function updateAutoL3Coral(num) {
-    let target = autoL3Coral + num;
-    if (target >= 0) {
-      setAutoL3Coral(target);
-    }
-  }
-
-  function updateAutoL4Coral(num) {
-    let target = autoL4Coral + num;
-    if (target >= 0) {
-      setAutoL4Coral(target);
-    }
-  }
-
-  function updateAutoAlgaeProcessor(num) {
-    let target = autoAlgaeProcessor + num;
-    if (target >= 0) {
-      setAutoAlgaeProcessor(target);
-    }
-  }
-
-  function updateAutoAlgaeNet(num) {
-    let target = autoAlgaeNet + num;
-    if (target >= 0) {
-      setAutoAlgaeNet(target);
-    }
-  }
-
-  function updateTeleOpL1Coral(num) {
-    let target = teleOpL1Coral + num;
-    if (target >= 0) {
-      setTeleOpL1Coral(target);
-    }
-  }
-
-  function updateTeleOpL2Coral(num) {
-    let target = teleOpL2Coral + num;
-    if (target >= 0) {
-      setTeleOpL2Coral(target);
-    }
-  }
-
-  function updateTeleOpL3Coral(num) {
-    let target = teleOpL3Coral + num;
-    if (target >= 0) {
-      setTeleOpL3Coral(target);
-    }
-  }
-
-  function updateTeleOpL4Coral(num) {
-    let target = teleOpL4Coral + num;
-    if (target >= 0) {
-      setTeleOpL4Coral(target);
-    }
-  }
-
-  function updateTeleOpAlgaeProcessor(num) {
-    let target = teleOpAlgaeProcessor + num;
-    if (target >= 0) {
-      setTeleOpAlgaeProcessor(target);
-    }
-  }
-
-  function updateTeleOpAlgaeNet(num) {
-    let target = teleOpAlgaeNet + num;
-    if (target >= 0) {
-      setTeleOpAlgaeNet(target);
+      setStat(target);
     }
   }
 }
@@ -870,9 +731,9 @@ const styles = StyleSheet.create({
   },
 
   counterButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: "#000",
