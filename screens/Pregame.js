@@ -1,44 +1,37 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-    View,
-    Text,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    StatusBar,
-    Platform,
-    TouchableOpacity,
-    TextInput,
-    Modal,
-    Image,
-    TouchableWithoutFeedback,
-    Keyboard
+  Image,
+  Keyboard,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-
 import * as FileSystem from "expo-file-system";
-import Checkbox from 'expo-checkbox';
+import Checkbox from "expo-checkbox";
 
-const getAllianceColor = (driverStation) => {
-  if (!driverStation) return null;
-  return driverStation.charAt(0) === 'R' ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
-};
-
-const PregameScreen = props => {
+const PregameScreen = (props) => {
   const { navigation, route } = props;
 
-  const [toNavigate, setToNavigate] = React.useState("Match");
+  const [matchNum, setMatchNum] = useState();
+  const [teamNum, setTeamNum] = useState();
 
-  const [matchNum, setMatchNum] = React.useState();
-  const [teamNum, setTeamNum] = React.useState();
-
-  const [scoutName, setScoutName] = React.useState();
-  const [driverStation, setDriverStation] = React.useState();
+  const [scoutName, setScoutName] = useState();
+  const [driverStation, setDriverStation] = useState();
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
 
   const [isNameModalVisible, setIsNameModalVisible] = useState(false);
-  const [tempScoutName, setTempScoutName] = useState('');
+  const [tempScoutName, setTempScoutName] = useState("");
 
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
-  const [commentValue, setCommentValue] = useState('');
+  const [commentValue, setCommentValue] = useState("");
 
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -48,23 +41,14 @@ const PregameScreen = props => {
   const [hpAtProcessor, setHpAtProcessor] = useState(false);
 
   const scheduleFileUri = `${
-      FileSystem.documentDirectory
+    FileSystem.documentDirectory
   }${"MatchSchedule.json"}`;
   const scheduleCsvUri = `${
     FileSystem.documentDirectory
   }${"MatchScheduleCsv.json"}`;
   const settingsFileUri = `${
-      FileSystem.documentDirectory
+    FileSystem.documentDirectory
   }${"ScoutingAppSettings.json"}`;
-
-  const docDir = `${FileSystem.documentDirectory}`;
-
-  const positions = ["LEFT", "CENTER", "RIGHT"];
-  const startingPositions = {
-    LEFT: "l",
-    CENTER: "c",
-    RIGHT: "r",
-  };
 
   const apiStations = {
     R1: "Red1",
@@ -75,15 +59,21 @@ const PregameScreen = props => {
     B3: "Blue3",
   };
 
-  React.useEffect(() => {
+  // Update match number, update team number, and clear comment on mount
+  useEffect(() => {
     if (route.params?.matchNum) {
-        setMatchNum(route.params.matchNum);
-        setCommentValue('');
+      setMatchNum(route.params.matchNum);
+      setCommentValue("");
+      if (!isPracticeMode) {
         findMatch();
+      } else {
+        setTeamNum(undefined);
+      }
     }
-  }, [route.params])
+  }, [route.params]);
 
-  React.useEffect(() => {
+  // Read from settings file and set scout info on mount
+  useEffect(() => {
     const loadScoutInfo = async () => {
       try {
         let settingsJSON = await JSON.parse(
@@ -91,51 +81,21 @@ const PregameScreen = props => {
         );
         setScoutName(settingsJSON["Settings"]["scoutName"]);
         setDriverStation(settingsJSON["Settings"]["driverStation"]);
+        setIsPracticeMode(settingsJSON["Settings"]["isPracticeMode"]);
       } catch (err) {
         console.log("No Settings File Saved.");
       }
     };
-    
+
     loadScoutInfo();
   }, []);
 
-  React.useEffect(() => {
-    const loadExistingComment = async () => {
-      if (!isInitialized && matchNum) {
-        try {
-          const csvURI = `${FileSystem.documentDirectory}match${matchNum}.csv`;
-          const exists = await FileSystem.getInfoAsync(csvURI);
-          
-          if (exists.exists) {
-            const data = await FileSystem.readAsStringAsync(csvURI);
-            const values = data.split(',');
-            const existingComment = values[values.length - 1];
-            
-            if (existingComment && existingComment !== `""`) {
-              setCommentValue(existingComment.replace(/^"|"$/g, ''));
-            } else {
-              setCommentValue('');
-            }
-          } else {
-            setCommentValue('');
-          }
-          
-          setIsInitialized(true);
-        } catch (error) {
-          console.error('Error loading existing comment:', error);
-          setCommentValue('');
-        }
-      }
-    };
-
-    loadExistingComment();
-  }, [matchNum, isInitialized]);
-
-  React.useEffect(() => {
+  // Determine the range of matches for the event on mount
+  useEffect(() => {
     const loadMatchRange = async () => {
       try {
         let tmp = await FileSystem.getInfoAsync(scheduleCsvUri);
-        
+
         if (!tmp.exists) {
           let tmp1 = await FileSystem.getInfoAsync(scheduleFileUri);
           if (tmp1.exists) {
@@ -149,21 +109,62 @@ const PregameScreen = props => {
           setMaxMatchNum(matchjson["Schedule"].length);
         }
       } catch (error) {
-        console.error('Error loading match range:', error);
+        console.error("Error loading match range:", error);
       }
     };
 
     loadMatchRange();
   }, []);
 
-  // Add new useEffect to clear comments when match number changes
-  React.useEffect(() => {
-    setCommentValue('');
+  // Load saved comments from filesystem when match number changes
+  useEffect(() => {
+    const loadExistingComment = async () => {
+      if (!isInitialized && matchNum) {
+        try {
+          const csvURI = `${FileSystem.documentDirectory}match${matchNum}.csv`;
+          const exists = await FileSystem.getInfoAsync(csvURI);
+
+          if (exists.exists) {
+            const data = await FileSystem.readAsStringAsync(csvURI);
+            const values = data.split(",");
+            const existingComment = values[values.length - 1];
+
+            if (existingComment && existingComment !== `""`) {
+              setCommentValue(existingComment.replace(/^"|"$/g, ""));
+            } else {
+              setCommentValue("");
+            }
+          } else {
+            setCommentValue("");
+          }
+
+          setIsInitialized(true);
+        } catch (error) {
+          console.error("Error loading existing comment:", error);
+          setCommentValue("");
+        }
+      }
+    };
+
+    loadExistingComment();
+  }, [matchNum, isInitialized]);
+
+  // Clear comments when match number changes
+  useEffect(() => {
+    setCommentValue("");
     setIsInitialized(false);
   }, [matchNum]);
 
+  // Return red or blue depending on the alliance
+  const getAllianceColor = (driverStation) => {
+    if (!driverStation) return null;
+    return driverStation.charAt(0) === "R"
+      ? "rgba(255, 0, 0, 0.1)"
+      : "rgba(0, 0, 255, 0.1)";
+  };
+
   const openNameModal = () => {
-    setTempScoutName(scoutName || '');
+    setTempScoutName(scoutName || "");
     setIsNameModalVisible(true);
   };
 
@@ -172,13 +173,17 @@ const PregameScreen = props => {
     setIsNameModalVisible(false);
   };
 
+  // Save scout name to settings file
   const updateScoutName = async (newName) => {
     try {
       let settingsJSON = await JSON.parse(
         await FileSystem.readAsStringAsync(settingsFileUri)
       );
       settingsJSON["Settings"]["scoutName"] = newName;
-      await FileSystem.writeAsStringAsync(settingsFileUri, JSON.stringify(settingsJSON, null, 2));
+      await FileSystem.writeAsStringAsync(
+        settingsFileUri,
+        JSON.stringify(settingsJSON, null, 2)
+      );
       setScoutName(newName);
     } catch (err) {
       console.log("Error updating scout name:", err);
@@ -189,7 +194,7 @@ const PregameScreen = props => {
   return (
     <SafeAreaView style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
           {/* Header */}
           <View style={styles.headerContainer}>
             <View style={styles.header}>
@@ -197,9 +202,11 @@ const PregameScreen = props => {
                 style={styles.backButton}
                 onPress={() => navigation.goBack()}
               >
-                <Text style={styles.backButtonText}>⬅</Text>
+                <Text style={styles.backButtonText}>←</Text>
               </TouchableOpacity>
-              <Text style={[styles.title, { marginHorizontal: 32 }]}>Pre-Game</Text>
+              <Text style={[styles.title, { marginHorizontal: 32 }]}>
+                Pre-Game
+              </Text>
               <TouchableOpacity
                 style={styles.commentButton}
                 onPress={() => setIsCommentModalVisible(true)}
@@ -212,7 +219,7 @@ const PregameScreen = props => {
             </View>
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
             keyboardShouldPersistTaps="handled"
@@ -224,14 +231,14 @@ const PregameScreen = props => {
                 <Text style={styles.sectionTitle}>Match Number</Text>
                 <TextInput
                   style={styles.input}
-                  onChangeText={text => { 
+                  onChangeText={(text) => {
                     const num = parseInt(text);
                     if (!text) {
                       setMatchNum(undefined);
-                      setCommentValue('');
+                      setCommentValue("");
                     } else if (num >= minMatchNum && num <= maxMatchNum) {
                       setMatchNum(num);
-                      setCommentValue('');
+                      setCommentValue("");
                     }
                   }}
                   value={matchNum ? String(matchNum) : undefined}
@@ -239,71 +246,114 @@ const PregameScreen = props => {
                   placeholderTextColor="rgba(255, 215, 0, 0.5)"
                   keyboardType="numeric"
                 />
-                
-                <TouchableOpacity 
-                  style={styles.findButton}
-                  onPress={async () => await findMatch()}
-                >
-                  <Text style={styles.buttonText}>Find Match</Text>
-                </TouchableOpacity>
+
+                {/* Find Match Button */}
+                {!isPracticeMode && (
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={async () => await findMatch()}
+                  >
+                    <Text style={styles.smallerButtonText}>Find Match</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Team Display Section */}
               <View style={[styles.section, styles.halfSection]}>
-                <Text style={styles.sectionTitle}>Your Team</Text>
-                <View style={[
-                  styles.teamContainer,
-                  driverStation && { backgroundColor: getAllianceColor(driverStation) }
-                ]}>
-                  {teamNum ? (
-                    <Text style={[
-                      styles.teamNumber,
-                      { color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc' }
-                    ]}>{teamNum}</Text>
-                  ) : (
-                    <View>
-                      <Text style={styles.label}>
-                        Enter match number and press Find Match
+                <Text style={styles.sectionTitle}>Team Number</Text>
+                {/* Text input in practice mode, normal text otherwise */}
+                {isPracticeMode ? (
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={(text) => {
+                      const num = parseInt(text);
+                      if (!text) {
+                        setTeamNum(undefined);
+                      } else {
+                        setTeamNum(num);
+                      }
+                    }}
+                    value={teamNum ? String(teamNum) : undefined}
+                    placeholder={`Enter team number...`}
+                    placeholderTextColor="rgba(255, 215, 0, 0.5)"
+                    keyboardType="numeric"
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.teamContainer,
+                      driverStation && {
+                        backgroundColor: getAllianceColor(driverStation),
+                      },
+                    ]}
+                  >
+                    {teamNum ? (
+                      <Text
+                        style={[
+                          styles.teamNumber,
+                          {
+                            color:
+                              driverStation?.charAt(0) === "R"
+                                ? "#cc0000"
+                                : "#0000cc",
+                          },
+                        ]}
+                      >
+                        {teamNum}
                       </Text>
-                      <Text style={styles.matchRangeText}>
-                        Valid matches: {minMatchNum}-{maxMatchNum}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                    ) : (
+                      <View>
+                        <Text style={styles.label}>
+                          Enter match number and press Find Match
+                        </Text>
+                        <Text style={styles.matchRangeText}>
+                          Valid matches: {minMatchNum}-{maxMatchNum}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
             </View>
 
             {/* Scout Info Section */}
             <View style={[styles.section, { marginBottom: 24 }]}>
               <Text style={styles.sectionTitle}>Scout Information</Text>
-              
+
               {/* Scout Name Button */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.scoutNameButton}
                 onPress={openNameModal}
               >
-                <Text style={styles.scoutNameText}>
-                  {scoutName || 'Set Scout Name...'}
+                <Text style={styles.biggerButtonText}>
+                  {scoutName || "Set Scout Name..."}
                 </Text>
               </TouchableOpacity>
-              
+
               {/* Driver Station Display */}
-              <View style={[
-                styles.stationDisplay,
-                driverStation && {
-                  backgroundColor: driverStation?.charAt(0) === 'R' ? 
-                    'rgba(255, 0, 0, 0.1)' : 
-                    'rgba(0, 0, 255, 0.1)',
-                }
-              ]}>
-                <Text style={[
-                  styles.stationText,
+              <View
+                style={[
+                  styles.stationDisplay,
                   driverStation && {
-                    color: driverStation?.charAt(0) === 'R' ? '#cc0000' : '#0000cc'
-                  }
-                ]}>
-                  {driverStation || 'Driver Station Not Set'}
+                    backgroundColor:
+                      driverStation?.charAt(0) === "R"
+                        ? "rgba(255, 0, 0, 0.1)"
+                        : "rgba(0, 0, 255, 0.1)",
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.biggerButtonText,
+                    driverStation && {
+                      color:
+                        driverStation?.charAt(0) === "R"
+                          ? "#cc0000"
+                          : "#0000cc",
+                    },
+                  ]}
+                >
+                  {driverStation || "Driver Station Not Set"}
                 </Text>
               </View>
             </View>
@@ -311,7 +361,7 @@ const PregameScreen = props => {
             {/* Human Player Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Human Player</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.checkboxContainer}
                 onPress={() => setHpAtProcessor(!hpAtProcessor)}
                 activeOpacity={0.7}
@@ -320,7 +370,7 @@ const PregameScreen = props => {
                   style={styles.checkbox}
                   value={hpAtProcessor}
                   onValueChange={setHpAtProcessor}
-                  color={hpAtProcessor ? '#000000' : undefined}
+                  color={hpAtProcessor ? "#000000" : undefined}
                 />
                 <Text style={styles.checkboxLabel}>HP at Processor</Text>
               </TouchableOpacity>
@@ -336,7 +386,7 @@ const PregameScreen = props => {
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.modalOverlay}>
                   <TouchableWithoutFeedback>
-                    <View style={[styles.modalContent, { marginTop: '10%' }]}>
+                    <View style={[styles.modalContent, { marginTop: "10%" }]}>
                       <Text style={styles.modalTitle}>Edit Scout Name</Text>
                       <TextInput
                         style={styles.nameModalInput}
@@ -352,13 +402,13 @@ const PregameScreen = props => {
                           style={[styles.modalButton, styles.cancelButton]}
                           onPress={() => setIsNameModalVisible(false)}
                         >
-                          <Text style={styles.modalButtonText}>Cancel</Text>
+                          <Text style={styles.smallerButtonText}>Cancel</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.modalButton, styles.saveButton]}
                           onPress={saveNameAndClose}
                         >
-                          <Text style={styles.modalButtonText}>Save</Text>
+                          <Text style={styles.smallerButtonText}>Save</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -367,15 +417,16 @@ const PregameScreen = props => {
               </TouchableWithoutFeedback>
             </Modal>
 
-            {/* Submit Button */}
+            {/* Start Match Button */}
             <TouchableOpacity
               style={[
+                styles.button,
                 styles.submitButton,
-                (!matchNum || !teamNum) && styles.submitButtonDisabled
+                (!matchNum || !teamNum) && styles.submitButtonDisabled,
               ]}
               onPress={async () => {
                 if (!matchNum || !teamNum) {
-                  alert('Please enter a match number and find your team first');
+                  alert("Please enter a match number and find your team first");
                   return;
                 }
                 try {
@@ -386,12 +437,14 @@ const PregameScreen = props => {
                     hpAtProcessor: hpAtProcessor,
                   });
                 } catch (error) {
-                  console.error('Error in submitPrematch:', error);
-                  alert('Error starting match. Please check your settings and try again.');
+                  console.error("Error in submitPrematch:", error);
+                  alert(
+                    "Error starting match. Please check your settings and try again."
+                  );
                 }
               }}
             >
-              <Text style={styles.buttonText}>Start Match</Text>
+              <Text style={styles.smallerButtonText}>Start Match</Text>
             </TouchableOpacity>
           </ScrollView>
 
@@ -420,13 +473,13 @@ const PregameScreen = props => {
                         style={[styles.modalButton, styles.cancelButton]}
                         onPress={() => setIsCommentModalVisible(false)}
                       >
-                        <Text style={styles.modalButtonText}>Close</Text>
+                        <Text style={styles.smallerButtonText}>Close</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.modalButton, styles.saveButton]}
                         onPress={() => setIsCommentModalVisible(false)}
                       >
-                        <Text style={styles.modalButtonText}>Save</Text>
+                        <Text style={styles.smallerButtonText}>Save</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -439,67 +492,44 @@ const PregameScreen = props => {
     </SafeAreaView>
   );
 
+  // Get the team nummber from the match schedule file based on the match number and driver statino
   async function findMatch() {
-      if (!matchNum) {
-        alert('Please enter a match number');
-        return;
-      }
+    if (!matchNum) {
+      alert("Please enter a match number");
+      return;
+    }
 
-      if (matchNum < minMatchNum || matchNum > maxMatchNum) {
-        alert(`Invalid match number. Please enter a match number between ${minMatchNum} and ${maxMatchNum}`);
-        setTeamNum(undefined);
-        return;
-      }
-
-      let settingsJSON = await JSON.parse(
-        await FileSystem.readAsStringAsync(settingsFileUri)
+    if (matchNum < minMatchNum || matchNum > maxMatchNum) {
+      alert(
+        `Invalid match number. Please enter a match number between ${minMatchNum} and ${maxMatchNum}`
       );
+      setTeamNum(undefined);
+      return;
+    }
 
-      let position = await settingsJSON["Settings"]["driverStation"];
+    let settingsJSON = await JSON.parse(
+      await FileSystem.readAsStringAsync(settingsFileUri)
+    );
 
-      let tmp = await FileSystem.getInfoAsync(scheduleCsvUri);
+    let position = await settingsJSON["Settings"]["driverStation"];
 
-      if (!tmp.exists) {
+    let tmp = await FileSystem.getInfoAsync(scheduleCsvUri);
 
-        let tmp1 = await FileSystem.getInfoAsync(scheduleFileUri);
-        if (!tmp1.exists) {
-          navigation.navigate("Settings");
-          return;
-        }
-
-        let jsontext = await FileSystem.readAsStringAsync(scheduleFileUri);
-        let matchjson = await JSON.parse(jsontext);
-        if (!matchNum) return;
-
-        let teams;
-
-        try {
-          teams = await matchjson["Schedule"][matchNum - 1]["teams"];
-        } catch (e) {
-          setTeamNum(undefined);
-          console.warn(e)
-          return;
-        }
-
-        await teams.forEach((team) => {
-          // console.log(apiStations[position as keyof typeof apiStations])
-          if (team["station"] == apiStations[position]) {
-            setTeamNum(parseInt(team["teamNumber"]));
-            return;
-          }
-        });
-
+    if (!tmp.exists) {
+      let tmp1 = await FileSystem.getInfoAsync(scheduleFileUri);
+      if (!tmp1.exists) {
+        navigation.navigate("Settings");
         return;
       }
-  
-      let jsontext = await FileSystem.readAsStringAsync(scheduleCsvUri);
+
+      let jsontext = await FileSystem.readAsStringAsync(scheduleFileUri);
       let matchjson = await JSON.parse(jsontext);
-      
       if (!matchNum) return;
-      
+
       let teams;
+
       try {
-        teams = await matchjson["Schedule"][matchNum - 1]["Teams"];
+        teams = await matchjson["Schedule"][matchNum - 1]["teams"];
       } catch (e) {
         setTeamNum(undefined);
         console.warn(e);
@@ -507,48 +537,66 @@ const PregameScreen = props => {
       }
 
       await teams.forEach((team) => {
-        if (team["station"] == position) {
+        if (team["station"] == apiStations[position]) {
           setTeamNum(parseInt(team["teamNumber"]));
-          console.log(team["teamNumber"]);
           return;
         }
       });
 
-      setIsInitialized(false);
-  }
+      return;
+    }
 
-  async function submitPrematch() {
-      let tmp = await FileSystem.getInfoAsync(settingsFileUri);
-      if (!tmp.exists) {
-        setToNavigate("Settings");
+    let jsontext = await FileSystem.readAsStringAsync(scheduleCsvUri);
+    let matchjson = await JSON.parse(jsontext);
+
+    if (!matchNum) return;
+
+    let teams;
+    try {
+      teams = await matchjson["Schedule"][matchNum - 1]["Teams"];
+    } catch (e) {
+      setTeamNum(undefined);
+      console.warn(e);
+      return;
+    }
+
+    await teams.forEach((team) => {
+      if (team["station"] == position) {
+        setTeamNum(parseInt(team["teamNumber"]));
+        console.log(team["teamNumber"]);
         return;
       }
-  
-      let settingsJSON = await JSON.parse(
-        await FileSystem.readAsStringAsync(settingsFileUri)
-      );
-  
-      let team = teamNum;
-      let match = matchNum;
-      let position = await settingsJSON["Settings"]["driverStation"];
-      let alliance = await settingsJSON["Settings"]["driverStation"].charAt(0);
-      let allianceKey = `${await alliance}${match}`;
-      let scout = await settingsJSON["Settings"]["scoutName"];
-      let startPos = "N/A";
-  
-      let tmaKey = `${team}-${allianceKey}`;
-  
-      let csvText = `${team},${match},${tmaKey},${position},${alliance},${scout},${
-        hpAtProcessor ? 1 : 0},${
-        commentValue === `` ? `""` : `"${commentValue}"`
-      }`;
-  
-      let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
-      await FileSystem.writeAsStringAsync(csvURI, csvText);
-      console.log(`CSV Text: ${await FileSystem.readAsStringAsync(csvURI)}`);
-  }
-}
+    });
 
+    setIsInitialized(false);
+  }
+
+  // Save prematch settings to file
+  async function submitPrematch() {
+    let settingsJSON = await JSON.parse(
+      await FileSystem.readAsStringAsync(settingsFileUri)
+    );
+
+    let team = teamNum;
+    let match = matchNum;
+    let position = await settingsJSON["Settings"]["driverStation"];
+    let alliance = await settingsJSON["Settings"]["driverStation"].charAt(0);
+    let allianceKey = `${await alliance}${match}`;
+    let scout = await settingsJSON["Settings"]["scoutName"];
+
+    let tmaKey = `${team}-${allianceKey}`;
+
+    let csvText = `${team},${match},${tmaKey},${position},${alliance},${scout},${
+      hpAtProcessor ? 1 : 0
+    },${commentValue === `` ? `""` : `"${commentValue}"`}`;
+
+    let csvURI = `${FileSystem.documentDirectory}match${match}.csv`;
+    await FileSystem.writeAsStringAsync(csvURI, csvText);
+    console.log(`CSV Text: ${await FileSystem.readAsStringAsync(csvURI)}`);
+  }
+};
+
+// Pregame stylesheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -556,18 +604,15 @@ const styles = StyleSheet.create({
   },
 
   headerContainer: {
-    backgroundColor: '#fff00d',
     borderBottomWidth: 2,
-    borderBottomColor: '#000000',
-    height: Platform.OS === "android" ? 
-      StatusBar.currentHeight + 70 : 
-      80,
+    borderBottomColor: "#000000",
+    height: Platform.OS === "android" ? StatusBar.currentHeight + 70 : 80,
   },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    alignItems: "center",
+    position: "absolute",
     bottom: 15,
     left: 0,
     right: 0,
@@ -576,9 +621,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
-    flex: 1,
     paddingHorizontal: 20,
-    backgroundColor: '#fff00d',
     paddingTop: 20,
   },
 
@@ -589,18 +632,18 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontSize: 28,
-    fontFamily: 'Cooper-Black',
+    fontFamily: "Cooper-Black",
     color: "#000000",
     textAlign: "center",
   },
 
   backButton: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -613,18 +656,16 @@ const styles = StyleSheet.create({
 
   backButtonText: {
     fontSize: 27,
-    color: '#FFD700',
-    fontWeight: '900',
-    lineHeight: 48,
-    width: 48,
-    textAlign: 'center',
-    textAlignVertical: 'center',
+    color: "#FFD700",
+    fontWeight: "900",
+    textAlign: "center",
+    textAlignVertical: "center",
     includeFontPadding: false,
-    marginTop: Platform.OS === 'ios' ? -3 : 0,
   },
 
   section: {
-    backgroundColor: '#ffffff',
+    marginBottom: 4,
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     padding: 24,
     shadowColor: "#000000",
@@ -639,26 +680,26 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: "bold",
+    color: "#000000",
     marginBottom: 16,
   },
 
   input: {
-    backgroundColor: '#1a1a1a',
-    color: '#FFD700',
+    backgroundColor: "#1a1a1a",
+    color: "#FFD700",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
-  findButton: {
-    backgroundColor: '#000000',
+  button: {
+    backgroundColor: "#000000",
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -669,66 +710,54 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  buttonText: {
-    color: '#FFD700',
+  smallerButtonText: {
+    color: "#FFD700",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+  },
+
+  biggerButtonText: {
+    color: "#FFD700",
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 
   label: {
     fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
+    color: "#666666",
+    textAlign: "center",
     marginBottom: 8,
   },
 
   teamNumber: {
     fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
 
   submitButton: {
-    backgroundColor: '#000000',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    marginTop: 20,
   },
 
   submitButtonDisabled: {
-    backgroundColor: '#666666',
+    backgroundColor: "#666666",
   },
 
   scoutNameButton: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
   },
 
-  scoutNameText: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    position: 'absolute',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -736,74 +765,62 @@ const styles = StyleSheet.create({
   },
 
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     padding: 24,
-    width: '90%',
+    width: "90%",
     maxWidth: 400,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
 
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: "bold",
+    color: "#000000",
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   modalInput: {
-    backgroundColor: '#1a1a1a',
-    color: '#FFD700',
+    backgroundColor: "#1a1a1a",
+    color: "#FFD700",
     borderRadius: 12,
     padding: 16,
     height: 300,
     fontSize: 16,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     marginBottom: 16,
   },
 
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 
   modalButton: {
     flex: 0.48,
     padding: 12,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   cancelButton: {
-    backgroundColor: '#666666',
+    backgroundColor: "#666666",
   },
 
   saveButton: {
-    backgroundColor: '#000000',
-  },
-
-  modalButtonText: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: 'bold',
+    backgroundColor: "#000000",
   },
 
   stationDisplay: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-
-  stationText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
 
   rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
 
@@ -814,55 +831,55 @@ const styles = StyleSheet.create({
 
   teamContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     minHeight: 100,
     borderRadius: 12,
     padding: 10,
   },
 
   commentButton: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   commentIcon: {
     width: 30,
     height: 30,
-    tintColor: '#FFD700',
+    tintColor: "#FFD700",
   },
 
   nameModalInput: {
-    backgroundColor: '#1a1a1a',
-    color: '#FFD700',
+    backgroundColor: "#1a1a1a",
+    color: "#FFD700",
     borderRadius: 12,
     padding: 16,
     height: 50,
     fontSize: 16,
-    textAlignVertical: 'center',
+    textAlignVertical: "center",
     marginBottom: 16,
   },
 
   matchRangeText: {
     fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
+    color: "#666666",
+    textAlign: "center",
     marginTop: 8,
   },
 
   checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 20,
     marginBottom: 10,
     paddingVertical: 15,
     paddingHorizontal: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
     borderRadius: 12,
   },
 
@@ -876,7 +893,7 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     fontSize: 20,
     marginLeft: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
 

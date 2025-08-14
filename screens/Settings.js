@@ -1,130 +1,104 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  SafeAreaView,
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  TextInput,
+  Alert,
   Image,
   Platform,
+  SafeAreaView,
+  ScrollView,
   StatusBar,
-  Button,
-  Alert,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 
+const SettingsScreen = (props) => {
+  const { navigation } = props;
 
-const SettingsScreen = props => {
-  const { navigation, route } = props;
+  const [codeText, setCodeText] = useState();
+  const [nameText, setNameText] = useState();
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
 
-  const [codeText, setCodeText] = React.useState();
-  const [nameText, setNameText] = React.useState();
-
-  const [jsonText, setJsonText] = React.useState();
-  const [isLoaded, setIsLoaded] = React.useState(false);
-
-  const [matchScheduleExists, setMatchScheduleExists] = React.useState(false);
-  const [showMatchSchedule, setShowMatchSchedule] = React.useState(false);
-  
-  const [matchScheduleString, setMatchScheduleString] = React.useState();
-  const [showScheduleCheckmark, setShowScheduleCheckmark] = React.useState(false);
+  const [showScheduleCheckmark, setShowScheduleCheckmark] = useState(false);
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialValues, setInitialValues] = useState({
     nameText: undefined,
     driverstation: undefined,
+    isPracticeMode: false,
   });
 
   const scheduleFileUri = `${
-      FileSystem.documentDirectory
+    FileSystem.documentDirectory
   }${"MatchSchedule.json"}`;
   const settingsFileUri = `${
-      FileSystem.documentDirectory
+    FileSystem.documentDirectory
   }${"ScoutingAppSettings.json"}`;
-  const scheduleCsvUri = `${
-      FileSystem.documentDirectory
-  }${"MatchScheduleCsv.json"}`;
 
-  const [driverstation, setDriverstation] = React.useState();
-  const [showPicker, setShowPicker] = React.useState(false);
-
-  const [orientation, setOrientation] = useState('portrait');
-  const [isTablet, setIsTablet] = useState(false);
+  const [driverstation, setDriverstation] = useState();
+  const [showPicker, setShowPicker] = useState(false);
 
   const [loadedEventCode, setLoadedEventCode] = useState(null);
 
+  // Set settings and match schedule on mount
   useEffect(() => {
-    const updateLayout = () => {
-      const dim = Dimensions.get('screen');
-      setOrientation(dim.width > dim.height ? 'landscape' : 'portrait');
-      setIsTablet(Math.min(dim.width, dim.height) >= 600);
-    };
-
-    updateLayout();
-    const subscription = Dimensions.addEventListener('change', updateLayout);
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  React.useEffect(() => {
+    // Read from settings file and set initial settings variables
     const setSettingsVars = async () => {
-        try {
-            let settingsJSON = await JSON.parse(
-                await FileSystem.readAsStringAsync(settingsFileUri)
-            );
-            const name = await settingsJSON["Settings"]["scoutName"];
-            const station = await settingsJSON["Settings"]["driverStation"];
-            setNameText(name);
-            setDriverstation(station);
-            setInitialValues({
-              nameText: name,
-              driverstation: station,
-            });
-        } catch (err) {
-            console.log("No Settings File Saved.");
-        }
-    }
+      try {
+        let settingsJSON = await JSON.parse(
+          await FileSystem.readAsStringAsync(settingsFileUri)
+        );
+        const name = await settingsJSON["Settings"]["scoutName"];
+        const station = await settingsJSON["Settings"]["driverStation"];
+        const practiceMode = await settingsJSON["Settings"]["isPracticeMode"];
+        setNameText(name);
+        setDriverstation(station);
+        setIsPracticeMode(practiceMode);
+        setInitialValues({
+          nameText: name,
+          driverstation: station,
+          practiceMode: practiceMode,
+        });
+      } catch (err) {
+        console.log("No Settings File Saved.");
+      }
+    };
 
+    // Read from match schedule file and set event code
     const checkMatchScheduleExists = async () => {
-        let tmp = await FileSystem.getInfoAsync(scheduleFileUri);
-        console.log(`Match Schedule Exists: ${tmp.exists}`);
-        setMatchScheduleExists(tmp.exists);
-        
-        if (tmp.exists) {
-          try {
-            const scheduleData = await FileSystem.readAsStringAsync(scheduleFileUri);
-            const parsedData = JSON.parse(scheduleData);
-            const eventCode = parsedData.eventCode || parsedData.Schedule?.[0]?.eventCode;
-            setLoadedEventCode(eventCode);
-          } catch (err) {
-            console.log("Error reading event code:", err);
-          }
+      let tmp = await FileSystem.getInfoAsync(scheduleFileUri);
+      console.log(`Match Schedule Exists: ${tmp.exists}`);
+
+      if (tmp.exists) {
+        try {
+          const scheduleData = await FileSystem.readAsStringAsync(
+            scheduleFileUri
+          );
+          const parsedData = JSON.parse(scheduleData);
+          const eventCode =
+            parsedData.eventCode || parsedData.Schedule?.[0]?.eventCode;
+          setLoadedEventCode(eventCode);
+        } catch (err) {
+          console.log("Error reading event code:", err);
         }
-    }
+      }
+    };
 
     setSettingsVars();
     checkMatchScheduleExists();
   }, []);
 
-  async function fetchScheduleJSON() {
-    setShowMatchSchedule(!showMatchSchedule);
-    let scheduleRead = await FileSystem.readAsStringAsync(scheduleFileUri);
-    let scheduleJSON = await JSON.parse(scheduleRead);
-    let scheduleString = JSON.stringify(scheduleJSON, null, "\t");
-    setMatchScheduleString(scheduleString);
-  }
-
+  // Save settings to file
   async function saveSettings() {
     let theJSON = `
       {
         "Settings": {
           "scoutName": "${nameText}",
-          "driverStation": "${driverstation}"
+          "driverStation": "${driverstation}",
+          "isPracticeMode": ${isPracticeMode}
         }
       }
     `;
@@ -133,18 +107,21 @@ const SettingsScreen = props => {
     console.log(await FileSystem.readAsStringAsync(settingsFileUri));
   }
 
+  // Save match schedule to file
   async function downloadMatchSchedule() {
     if (!codeText) {
-      alert('Please enter an event code');
+      alert("Please enter an event code.");
       return;
     }
 
     try {
       setShowScheduleCheckmark(false);
       const data = await getMatchSchedule();
-      
+
       if (!data) {
-        alert('Failed to download match schedule. Please check the event code and try again.');
+        alert(
+          "Failed to download match schedule. Please check the event code and try again."
+        );
         return;
       }
 
@@ -152,25 +129,30 @@ const SettingsScreen = props => {
         const parsedData = JSON.parse(data);
         parsedData.eventCode = codeText;
         const formattedJSON = JSON.stringify(parsedData, null, "\t");
-        
+
         await FileSystem.writeAsStringAsync(scheduleFileUri, formattedJSON);
         setShowScheduleCheckmark(true);
         setLoadedEventCode(codeText);
-        console.log('Match schedule saved successfully');
+        console.log("Match schedule saved successfully");
       } catch (e) {
-        alert('Invalid data received from the server. Please try again.');
-        console.error('JSON parsing error:', e);
+        alert("Invalid data received from the server. Please try again.");
+        console.error("JSON parsing error:", e);
       }
     } catch (error) {
-      alert('Error downloading match schedule. Please check your connection and try again.');
-      console.error('Download error:', error);
+      alert(
+        "Error downloading match schedule. Please check your connection and try again."
+      );
+      console.error("Download error:", error);
     }
   }
 
+  // Get match schedule from FIRST API
   async function getMatchSchedule() {
     try {
       if (!codeText || codeText.length < 8) {
-        throw new Error('Invalid event code format. Expected format: YYYYevent (e.g., 2024onwat)');
+        throw new Error(
+          "Invalid event code format. Expected format: YYYYevent (e.g., 2024onwat)"
+        );
       }
 
       const year = codeText.substring(0, 4);
@@ -199,31 +181,45 @@ const SettingsScreen = props => {
       }
 
       const data = await response.text();
-      setJsonText(data);
       return data;
     } catch (error) {
-      console.error('Error in getMatchSchedule:', error);
+      console.error("Error in getMatchSchedule:", error);
       return null;
     }
   }
 
+  // Update scout name
   const handleNameChange = (text) => {
     setNameText(text);
     setHasUnsavedChanges(
-      text !== initialValues.nameText || 
-      driverstation !== initialValues.driverstation
+      text !== initialValues.nameText ||
+        driverstation !== initialValues.driverstation ||
+        isPracticeMode !== initialValues.isPracticeMode
     );
   };
 
+  // Update driver station
   const handleDriverstationChange = (station) => {
     setDriverstation(station);
     setShowPicker(false);
     setHasUnsavedChanges(
-      nameText !== initialValues.nameText || 
-      station !== initialValues.driverstation
+      nameText !== initialValues.nameText ||
+        station !== initialValues.driverstation ||
+        isPracticeMode !== initialValues.isPracticeMode
     );
   };
 
+  // Update if app is in practice mode
+  const handlePracticeModeChange = (value) => {
+    setIsPracticeMode((prev) => !prev);
+    setHasUnsavedChanges(
+      nameText !== initialValues.nameText ||
+        driverstation !== initialValues.driverstation ||
+        value !== initialValues.isPracticeMode
+    );
+  };
+
+  // Show alert if there are unsaved changes when user presses back button
   const handleBackPress = () => {
     if (hasUnsavedChanges) {
       Alert.alert(
@@ -232,13 +228,13 @@ const SettingsScreen = props => {
         [
           {
             text: "Stay",
-            style: "cancel"
+            style: "cancel",
           },
           {
             text: "Discard Changes",
             style: "destructive",
-            onPress: () => navigation.goBack()
-          }
+            onPress: () => navigation.goBack(),
+          },
         ]
       );
     } else {
@@ -246,34 +242,34 @@ const SettingsScreen = props => {
     }
   };
 
+  // Clear match data from filesystem
   const clearAllMatchData = async () => {
     try {
       // Get all files in the document directory
-      const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory);
-      
+      const files = await FileSystem.readDirectoryAsync(
+        FileSystem.documentDirectory
+      );
+
       // Filter for match CSV files
-      const matchFiles = files.filter(file => file.startsWith('match') && file.endsWith('.csv'));
-      
+      const matchFiles = files.filter(
+        (file) => file.startsWith("match") && file.endsWith(".csv")
+      );
+
       // Delete each match file
       for (const file of matchFiles) {
         await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${file}`);
       }
-      
-      Alert.alert(
-        "Success",
-        `Cleared data for ${matchFiles.length} matches`,
-        [{ text: "OK" }]
-      );
+
+      Alert.alert("Success", `Cleared data for ${matchFiles.length} matches`, [
+        { text: "OK" },
+      ]);
     } catch (error) {
-      console.error('Error clearing match data:', error);
-      Alert.alert(
-        "Error",
-        "Failed to clear match data",
-        [{ text: "OK" }]
-      );
+      console.error("Error clearing match data:", error);
+      Alert.alert("Error", "Failed to clear match data", [{ text: "OK" }]);
     }
   };
 
+  // Show alert before clearing match data
   const confirmClearData = () => {
     Alert.alert(
       "Clear All Match Data",
@@ -281,13 +277,13 @@ const SettingsScreen = props => {
       [
         {
           text: "Cancel",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "Clear",
           onPress: clearAllMatchData,
-          style: "destructive"
-        }
+          style: "destructive",
+        },
       ]
     );
   };
@@ -297,10 +293,7 @@ const SettingsScreen = props => {
       {/* Sticky Header */}
       <View style={styles.headerContainer}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBackPress}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
@@ -308,22 +301,24 @@ const SettingsScreen = props => {
       </View>
 
       {/* Main Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
       >
-        {/* Import Match Schedule Section - Combined */}
+        {/* Import Match Schedule Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Import Match Schedule</Text>
           <Text style={styles.warning}>DO NOT TOUCH IF AT EVENT</Text>
-          
+
           {loadedEventCode && (
             <View style={styles.eventCodeDisplay}>
               <Text style={styles.eventCodeLabel}>Current Event:</Text>
-              <Text style={styles.eventCodeText}>{loadedEventCode}</Text>
+              <Text style={[styles.smallerButtonText, styles.blackText]}>
+                {loadedEventCode}
+              </Text>
             </View>
           )}
-          
+
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -333,22 +328,24 @@ const SettingsScreen = props => {
               placeholderTextColor="rgba(255, 215, 0, 0.5)"
             />
             {showScheduleCheckmark && (
-              <Image 
-                style={styles.checkmark} 
-                source={require('../assets/images/checkmark-icon.png')}
+              <Image
+                style={styles.checkmark}
+                source={require("../assets/images/checkmark-icon.png")}
               />
             )}
           </View>
-          
+
           <Text style={styles.helperText}>
             Format: YYYYeventcode (e.g., 2024onwat)
           </Text>
-          
+
           <TouchableOpacity
-            style={styles.importButton}
+            style={styles.button}
             onPress={downloadMatchSchedule}
           >
-            <Text style={styles.buttonText}>Import Using Event Code</Text>
+            <Text style={[styles.smallerButtonText, styles.yellowText]}>
+              Import Using Event Code
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -369,36 +366,40 @@ const SettingsScreen = props => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Driver Station</Text>
           <Text style={styles.warning}>*MUST SET</Text>
-          <TouchableOpacity 
-            style={styles.stationButton}
+          <TouchableOpacity
+            style={styles.button}
             onPress={() => setShowPicker(!showPicker)}
           >
-            <Text style={styles.stationText}>
-              {driverstation ? driverstation : 'Select Driver Station...'}
+            <Text style={[styles.smallerButtonText, styles.yellowText]}>
+              {driverstation ? driverstation : "Select Driver Station..."}
             </Text>
           </TouchableOpacity>
 
           {showPicker && (
             <View style={styles.stationPicker}>
-              <View style={styles.redStations}>
-                {['R1', 'R2', 'R3'].map(station => (
-                  <TouchableOpacity 
+              <View style={[styles.stations, styles.redStations]}>
+                {["R1", "R2", "R3"].map((station) => (
+                  <TouchableOpacity
                     key={station}
                     style={styles.stationOption}
                     onPress={() => handleDriverstationChange(station)}
                   >
-                    <Text style={styles.stationOptionText}>{station}</Text>
+                    <Text style={[styles.biggerButtonText, styles.blackText]}>
+                      {station}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={styles.blueStations}>
-                {['B1', 'B2', 'B3'].map(station => (
-                  <TouchableOpacity 
+              <View style={[styles.stations, styles.blueStations]}>
+                {["B1", "B2", "B3"].map((station) => (
+                  <TouchableOpacity
                     key={station}
                     style={styles.stationOption}
                     onPress={() => handleDriverstationChange(station)}
                   >
-                    <Text style={styles.stationOptionText}>{station}</Text>
+                    <Text style={[styles.biggerButtonText, styles.blackText]}>
+                      {station}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -406,9 +407,22 @@ const SettingsScreen = props => {
           )}
         </View>
 
+        {/* Practice Mode Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionFlexRow}>
+            <Text style={styles.sectionTitle}>Practice Mode</Text>
+            <Switch
+              trackColor={{ false: "#666666", true: "#000000" }}
+              thumbColor={isPracticeMode ? "#FFD700" : "#F6F6F6"}
+              onValueChange={handlePracticeModeChange}
+              value={isPracticeMode}
+            />
+          </View>
+        </View>
+
         {/* Save Button */}
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[styles.button, styles.saveButton]}
           onPress={async () => {
             await saveSettings();
             setHasUnsavedChanges(false);
@@ -419,24 +433,31 @@ const SettingsScreen = props => {
             navigation.navigate("Home");
           }}
         >
-          <Text style={styles.saveButtonText}>Save Settings</Text>
+          <Text style={[styles.biggerButtonText, styles.yellowText]}>
+            Save Settings
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Add this before the closing SafeAreaView */}
+      {/* Clear Match Data Section */}
       <View style={styles.dangerZone}>
-        <Text style={styles.dangerZoneTitle}>Danger Zone</Text>
+        <Text style={[styles.warning, styles.dangerZoneTitle]}>
+          Danger Zone
+        </Text>
         <TouchableOpacity
           style={styles.clearDataButton}
           onPress={confirmClearData}
         >
-          <Text style={styles.clearDataButtonText}>Clear All Match Data</Text>
+          <Text style={[styles.smallerButtonText, styles.whiteText]}>
+            Clear All Match Data
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
-}
+};
 
+// Settings stylesheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -444,18 +465,15 @@ const styles = StyleSheet.create({
   },
 
   headerContainer: {
-    backgroundColor: '#fff00d',
     borderBottomWidth: 2,
-    borderBottomColor: '#000000',
-    height: Platform.OS === "android" ? 
-      StatusBar.currentHeight + 70 : 
-      80,
+    borderBottomColor: "#000000",
+    height: Platform.OS === "android" ? StatusBar.currentHeight + 70 : 80,
   },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    alignItems: "center",
+    position: "absolute",
     bottom: 15,
     left: 0,
     right: 0,
@@ -464,9 +482,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
-    flex: 1,
     paddingHorizontal: 20,
-    backgroundColor: '#fff00d',
     paddingTop: 20,
   },
 
@@ -477,19 +493,19 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontSize: 28,
-    fontFamily: 'Cooper-Black',
+    fontFamily: "Cooper-Black",
     color: "#000000",
     textAlign: "center",
     marginRight: 32,
   },
 
   backButton: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -502,17 +518,16 @@ const styles = StyleSheet.create({
 
   backButtonText: {
     fontSize: 30,
-    color: '#FFD700',
-    fontWeight: '900',
-    textAlign: 'center',
-    textAlignVertical: 'center',
+    color: "#FFD700",
+    fontWeight: "900",
+    textAlign: "center",
+    textAlignVertical: "center",
     includeFontPadding: false,
-    marginTop: Platform.OS === 'ios' ? -3 : 0,
   },
 
   section: {
     marginBottom: 24,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     padding: 24,
     shadowColor: "#000000",
@@ -527,32 +542,37 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: "bold",
+    color: "#000000",
     marginBottom: 5,
+  },
+
+  sectionFlexRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 
   warning: {
     fontSize: 14,
-    color: '#FF0000',
-    fontWeight: 'bold',
+    color: "#FF0000",
+    fontWeight: "bold",
     marginBottom: 10,
   },
 
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   input: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
-    color: '#FFD700',
+    backgroundColor: "#1a1a1a",
+    color: "#FFD700",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     marginBottom: 10,
-    placeholderTextColor: 'rgba(255, 215, 0, 0.5)',
+    placeholderTextColor: "rgba(255, 215, 0, 0.5)",
   },
 
   checkmark: {
@@ -561,11 +581,11 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 
-  importButton: {
-    backgroundColor: '#000000',
+  button: {
+    backgroundColor: "#000000",
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
     shadowColor: "#000",
     shadowOffset: {
@@ -577,38 +597,33 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  buttonText: {
-    color: '#FFD700',
+  smallerButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 
-  stationButton: {
-    backgroundColor: '#000000',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+  biggerButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
 
-  stationText: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: 'bold',
+  whiteText: {
+    color: "#ffffff",
+  },
+
+  blackText: {
+    color: "#000000",
+  },
+
+  yellowText: {
+    color: "#FFD700",
   },
 
   stationPicker: {
     marginTop: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     shadowColor: "#000000",
     shadowOffset: {
       width: 0,
@@ -619,126 +634,52 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  redStations: {
-    backgroundColor: 'rgba(255, 0, 0, 0.4)',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  stations: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     padding: 16,
   },
 
+  redStations: {
+    backgroundColor: "rgba(255, 0, 0, 0.4)",
+  },
+
   blueStations: {
-    backgroundColor: 'rgba(0, 0, 255, 0.4)',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
+    backgroundColor: "rgba(0, 0, 255, 0.4)",
   },
 
   stationOption: {
     padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 8,
     minWidth: 60,
-    alignItems: 'center',
-  },
-
-  stationOptionText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
+    alignItems: "center",
   },
 
   saveButton: {
-    backgroundColor: '#000000',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-
-  saveButtonText: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-
-  permissionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-
-  permissionText: {
-    fontSize: 16,
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-
-  permissionButton: {
-    backgroundColor: '#000000',
-    padding: 15,
-    borderRadius: 8,
-    width: '80%',
-    alignItems: 'center',
-  },
-
-  permissionButtonText: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  orText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-    fontWeight: 'bold',
-    marginVertical: 16,
+    marginTop: 20,
   },
 
   eventCodeDisplay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   eventCodeLabel: {
     fontSize: 16,
-    color: '#666666',
+    color: "#666666",
     marginRight: 8,
-  },
-
-  eventCodeText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000000',
   },
 
   helperText: {
     fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
+    color: "#666666",
+    textAlign: "center",
     marginBottom: 10,
   },
 
@@ -746,27 +687,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#ff0000',
+    borderTopColor: "#ff0000",
   },
-  
+
   dangerZoneTitle: {
-    color: '#ff0000',
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
   },
-  
+
   clearDataButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: "#ff0000",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
-  },
-  
-  clearDataButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    alignItems: "center",
   },
 });
 
